@@ -12,15 +12,19 @@ from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime
 
+from pymongo.server_api import ServerApi
+
 # Setup logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# MongoDB connection
-client = MongoClient("mongodb://localhost:27017")
-db = client["your_database_name"]
-applicants_collection = db["applicants"]
+# Connect to MongoDB
+uri = "mongodb+srv://smitshahcloudboost:1234@cluster0.45ng0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
+# Create a new client and connect to the server
+client = MongoClient(uri, server_api=ServerApi("1"))
+db = client["internlink_deployment_dummy"]
+applicants_collection = db["applicants"]
 app = Flask(__name__)
 cors = CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
@@ -91,14 +95,47 @@ def transform_mongodb_to_features(applicant):
 
 
 def calculate_similarity(applicant1, applicant2):
-    """Calculate similarity between two applicants"""
-    features = ["age", "experience"] + LANGUAGES + TAGS
+    """Calculate similarity between two applicants with weighted features"""
 
-    vector1 = [applicant1[f] for f in features]
-    vector2 = [applicant2[f] for f in features]
+    # Normalize age (assuming typical working age range 18-65)
+    def normalize_age(age):
+        return (age - 18) / (65 - 18)
 
-    similarity = cosine_similarity([vector1], [vector2])[0][0]
-    return round(similarity * 100, 2)
+    # Normalize experience (assuming max 40 years)
+    def normalize_experience(exp):
+        return exp / 40
+
+    # Weights for different feature types
+    weights = {"age": 0.15, "experience": 0.25, "languages": 0.3, "tags": 0.3}
+
+    # Calculate weighted components
+    age_sim = 1 - abs(
+        normalize_age(applicant1["age"]) - normalize_age(applicant2["age"])
+    )
+    exp_sim = 1 - abs(
+        normalize_experience(applicant1["experience"])
+        - normalize_experience(applicant2["experience"])
+    )
+
+    # Language similarity (Jaccard similarity)
+    lang1 = set(i for i in LANGUAGES if applicant1[i])
+    lang2 = set(i for i in LANGUAGES if applicant2[i])
+    lang_sim = len(lang1.intersection(lang2)) / max(len(lang1.union(lang2)), 1)
+
+    # Tags similarity (Jaccard similarity)
+    tags1 = set(t for t in TAGS if applicant1[t])
+    tags2 = set(t for t in TAGS if applicant2[t])
+    tags_sim = len(tags1.intersection(tags2)) / max(len(tags1.union(tags2)), 1)
+
+    # Calculate weighted similarity
+    total_similarity = (
+        weights["age"] * age_sim
+        + weights["experience"] * exp_sim
+        + weights["languages"] * lang_sim
+        + weights["tags"] * tags_sim
+    )
+
+    return round(total_similarity * 100, 2)
 
 
 def find_similar_applicants(target_applicant, k=5):
@@ -226,8 +263,11 @@ def recommend_applicants():
 
         # Experience requirement
         if "min_experience" in requirements:
-            query["profile.experience"] = {
-                "$size": {"$gte": requirements["min_experience"]}
+            query["$expr"] = {
+                "$gte": [
+                    {"$size": "$profile.experience"},
+                    requirements["min_experience"],
+                ]
             }
 
         # Skills requirement
