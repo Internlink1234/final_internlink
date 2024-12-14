@@ -106,7 +106,7 @@ def calculate_similarity(applicant1, applicant2):
         return exp / 40
 
     # Weights for different feature types
-    weights = {"age": 0.15, "experience": 0.25, "languages": 0.3, "tags": 0.3}
+    weights = {"age": 0.15, "experience": 0.35, "languages": 0.15, "tags": 0.35}
 
     # Calculate weighted components
     age_sim = 1 - abs(
@@ -189,6 +189,7 @@ def compare_applicants():
 
         # Calculate differences
         differences = []
+        similarities = []
 
         # Experience difference
         exp_diff = len(applicant1["profile"].get("experience", [])) - len(
@@ -202,6 +203,8 @@ def compare_applicants():
                     f"{'more' if exp_diff > 0 else 'less'} years of experience",
                 }
             )
+        else:
+            similarities.append("experience")
 
         # Language differences
         langs1 = set(
@@ -228,8 +231,14 @@ def compare_applicants():
                         "explanation": f"{applicant2['name']} additionally knows: {', '.join(unique2)}",
                     }
                 )
+        else:
+            similarities.append("languages")
 
-        response = {"similarity_score": similarity_score, "differences": differences}
+        response = {
+            "similarity_score": similarity_score,
+            "differences": differences,
+            "similarities": similarities,
+        }
 
         return jsonify(response), 200
 
