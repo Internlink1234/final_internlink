@@ -11,7 +11,7 @@ import sys
 from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime
-
+import os
 from pymongo.server_api import ServerApi
 
 # Setup logging
