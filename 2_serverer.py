@@ -322,63 +322,63 @@ def health_check():
 @cross_origin()
 def compare_applicants():
     """
-        Compare two applicants and provide detailed similarity analysis.
+    Compare two applicants and provide detailed similarity analysis.
 
-        Input JSON Format:
-        {
-            "applicant1_id": "507f1f77bcf86cd799439011",  # MongoDB ObjectId as string
-            "applicant2_id": "507f1f77bcf86cd799439012"   # MongoDB ObjectId as string
-        }
+    Input JSON Format:
+    {
+        "applicant1_id": "507f1f77bcf86cd799439011",  # MongoDB ObjectId as string
+        "applicant2_id": "507f1f77bcf86cd799439012"   # MongoDB ObjectId as string
+    }
 
-        Returns:
-        {
-            "similarity_score": 85.5,  # Overall similarity percentage
-            "match_factors": {
-                "skills_match": {
-                    "common": ["Python", "Java"],
-                    "only_applicant1": ["React"],
-                    "only_applicant2": ["Angular"]
-                },
+    Returns:
+    {
+        "similarity_score": 85.5,  # Overall similarity percentage
+        "match_factors": {
+            "skills_match": {
+                "common": ["Python", "Java"],
+                "only_applicant1": ["React"],
+                "only_applicant2": ["Angular"]
+            },
+            "education": {
+                "same_level": true,
+                "same_major": false,
+                "cgpa_difference": 0.5
+            },
+            "experience_gap": 1
+        },
+        "applicant1_details": {
+            "name": "John Doe",
+            "profile": {
+                "age": 25,
                 "education": {
-                    "same_level": true,
-                    "same_major": false,
-                    "cgpa_difference": 0.5
+                    "institutionName": "MIT",
+                    "institutionType": "college",
+                    "major": "Computer Science",
+                    "cgpa": "3.8"
                 },
-                "experience_gap": 1
-            },
-            "applicant1_details": {
-                "name": "John Doe",
-                "profile": {
-                    "age": 25,
-                    "education": {
-                        "institutionName": "MIT",
-                        "institutionType": "college",
-                        "major": "Computer Science",
-                        "cgpa": "3.8"
-                    },
-                    "experience": [...],
-                    "skills": [...],
-                    "languages": [...],
-                    "tags": [...]
-                }
-            },
-            "applicant2_details": {
-                "name": "Jane Smith",
-                "profile": {
-                    // Similar structure as applicant1_details
-                }
+                "experience": [...],
+                "skills": [...],
+                "languages": [...],
+                "tags": [...]
+            }
+        },
+        "applicant2_details": {
+            "name": "Jane Smith",
+            "profile": {
+                // Similar structure as applicant1_details
             }
         }
+    }
 
-        Error Response:
-        {
-            "error": {
-                "type": "ValueError",
-                "message": "Invalid applicant ID",
-                "traceback": "..."
-            }
+    Error Response:
+    {
+        "error": {
+            "type": "ValueError",
+            "message": "Invalid applicant ID",
+            "traceback": "..."
         }
-        """
+    }
+    """
     try:
         data = request.get_json()
         applicant1_id = ObjectId(data.get("applicant1_id"))
@@ -399,32 +399,53 @@ def compare_applicants():
         match_factors = {
             "skills_match": {
                 "common": list(
-                    set(s["skillName"].lower() for s in applicant1["profile"].get("skills", []))
-                    .intersection(set(s["skillName"].lower() for s in applicant2["profile"].get("skills", [])))
+                    set(
+                        s["skillName"].lower()
+                        for s in applicant1["profile"].get("skills", [])
+                    ).intersection(
+                        set(
+                            s["skillName"].lower()
+                            for s in applicant2["profile"].get("skills", [])
+                        )
+                    )
                 ),
                 "only_applicant1": list(
-                    set(s["skillName"].lower() for s in applicant1["profile"].get("skills", []))
-                    - set(s["skillName"].lower() for s in applicant2["profile"].get("skills", []))
+                    set(
+                        s["skillName"].lower()
+                        for s in applicant1["profile"].get("skills", [])
+                    )
+                    - set(
+                        s["skillName"].lower()
+                        for s in applicant2["profile"].get("skills", [])
+                    )
                 ),
                 "only_applicant2": list(
-                    set(s["skillName"].lower() for s in applicant2["profile"].get("skills", []))
-                    - set(s["skillName"].lower() for s in applicant1["profile"].get("skills", []))
-                )
+                    set(
+                        s["skillName"].lower()
+                        for s in applicant2["profile"].get("skills", [])
+                    )
+                    - set(
+                        s["skillName"].lower()
+                        for s in applicant1["profile"].get("skills", [])
+                    )
+                ),
             },
             "education": {
-                "same_level": applicant1["profile"].get("education", {}).get("institutionType") ==
-                             applicant2["profile"].get("education", {}).get("institutionType"),
-                "same_major": applicant1["profile"].get("education", {}).get("major") ==
-                             applicant2["profile"].get("education", {}).get("major"),
+                "same_level": applicant1["profile"]
+                .get("education", {})
+                .get("institutionType")
+                == applicant2["profile"].get("education", {}).get("institutionType"),
+                "same_major": applicant1["profile"].get("education", {}).get("major")
+                == applicant2["profile"].get("education", {}).get("major"),
                 "cgpa_difference": abs(
-                    float(applicant1["profile"].get("education", {}).get("cgpa", 0)) -
-                    float(applicant2["profile"].get("education", {}).get("cgpa", 0))
-                )
+                    float(applicant1["profile"].get("education", {}).get("cgpa", 0))
+                    - float(applicant2["profile"].get("education", {}).get("cgpa", 0))
+                ),
             },
             "experience_gap": abs(
-                len(applicant1["profile"].get("experience", [])) -
-                len(applicant2["profile"].get("experience", []))
-            )
+                len(applicant1["profile"].get("experience", []))
+                - len(applicant2["profile"].get("experience", []))
+            ),
         }
 
         response = {
@@ -438,8 +459,8 @@ def compare_applicants():
                     "experience": applicant1["profile"].get("experience"),
                     "skills": applicant1["profile"].get("skills"),
                     "languages": applicant1["profile"].get("languages"),
-                    "tags": applicant1["profile"].get("tags")
-                }
+                    "tags": applicant1["profile"].get("tags"),
+                },
             },
             "applicant2_details": {
                 "name": applicant2["name"],
@@ -449,9 +470,9 @@ def compare_applicants():
                     "experience": applicant2["profile"].get("experience"),
                     "skills": applicant2["profile"].get("skills"),
                     "languages": applicant2["profile"].get("languages"),
-                    "tags": applicant2["profile"].get("tags")
-                }
-            }
+                    "tags": applicant2["profile"].get("tags"),
+                },
+            },
         }
 
         return jsonify(response), 200
@@ -465,54 +486,54 @@ def compare_applicants():
 @cross_origin()
 def recommend_applicants():
     """
-        Get applicant recommendations based on specified requirements.
+    Get applicant recommendations based on specified requirements.
 
-        Input JSON Format:
+    Input JSON Format:
+    {
+        "requirements": {
+            "min_age": 20,
+            "max_age": 30,
+            "languages": ["English", "Hindi"],
+            "min_experience": 2,
+            "required_skills": ["Python", "Java", "React"],
+            "tags": ["IT", "Marketing"],
+            "education_level": "college",
+            "major": "Computer Science"
+        }
+    }
+
+    Returns:
+    [
         {
-            "requirements": {
-                "min_age": 20,
-                "max_age": 30,
+            "id": "507f1f77bcf86cd799439011",
+            "name": "John Doe",
+            "match_score": 92.5,
+            "profile": {
+                "age": 25,
+                "experience": 3,
+                "education": {
+                    "institutionName": "MIT",
+                    "institutionType": "college",
+                    "major": "Computer Science",
+                    "cgpa": "3.8"
+                },
                 "languages": ["English", "Hindi"],
-                "min_experience": 2,
-                "required_skills": ["Python", "Java", "React"],
-                "tags": ["IT", "Marketing"],
-                "education_level": "college",
-                "major": "Computer Science"
+                "skills": ["Python", "Java", "React"],
+                "tags": ["IT", "Marketing"]
             }
-        }
+        },
+        // ... more recommendations
+    ]
 
-        Returns:
-        [
-            {
-                "id": "507f1f77bcf86cd799439011",
-                "name": "John Doe",
-                "match_score": 92.5,
-                "profile": {
-                    "age": 25,
-                    "experience": 3,
-                    "education": {
-                        "institutionName": "MIT",
-                        "institutionType": "college",
-                        "major": "Computer Science",
-                        "cgpa": "3.8"
-                    },
-                    "languages": ["English", "Hindi"],
-                    "skills": ["Python", "Java", "React"],
-                    "tags": ["IT", "Marketing"]
-                }
-            },
-            // ... more recommendations
-        ]
-
-        Error Response:
-        {
-            "error": {
-                "type": "ValueError",
-                "message": "Invalid requirement format",
-                "traceback": "..."
-            }
+    Error Response:
+    {
+        "error": {
+            "type": "ValueError",
+            "message": "Invalid requirement format",
+            "traceback": "..."
         }
-        """
+    }
+    """
     try:
         data = request.get_json()
         requirements = data.get("requirements", {})
@@ -535,7 +556,10 @@ def recommend_applicants():
         # Experience requirement
         if "min_experience" in requirements:
             query["$expr"] = {
-                "$gte": [{"$size": "$profile.experience"}, requirements["min_experience"]]
+                "$gte": [
+                    {"$size": "$profile.experience"},
+                    requirements["min_experience"],
+                ]
             }
 
         # Skills requirement
@@ -558,7 +582,9 @@ def recommend_applicants():
 
         # Transform to feature vectors and calculate similarities
         if matching_applicants:
-            feature_vectors = [transform_mongodb_to_features(app) for app in matching_applicants]
+            feature_vectors = [
+                transform_mongodb_to_features(app) for app in matching_applicants
+            ]
 
             recommendations = []
             for i, app in enumerate(matching_applicants):
@@ -567,31 +593,46 @@ def recommend_applicants():
                     "age": requirements.get("min_age", 0),
                     "experience": requirements.get("min_experience", 0),
                     "profile": {
-                        "skills": [{"skillName": skill} for skill in requirements.get("required_skills", [])],
-                        "languages": [{"language": lang} for lang in requirements.get("languages", [])],
+                        "skills": [
+                            {"skillName": skill}
+                            for skill in requirements.get("required_skills", [])
+                        ],
+                        "languages": [
+                            {"language": lang}
+                            for lang in requirements.get("languages", [])
+                        ],
                         "tags": requirements.get("tags", []),
                         "education": {
                             "institutionType": requirements.get("education_level", ""),
-                            "major": requirements.get("major", "")
-                        }
-                    }
+                            "major": requirements.get("major", ""),
+                        },
+                    },
                 }
 
-                similarity_score = calculate_similarity(feature_vectors[i], target_features)
+                similarity_score = calculate_similarity(
+                    feature_vectors[i], target_features
+                )
 
-                recommendations.append({
-                    "id": str(app["_id"]),
-                    "name": app["name"],
-                    "match_score": similarity_score,
-                    "profile": {
-                        "age": app["profile"].get("age"),
-                        "experience": len(app["profile"].get("experience", [])),
-                        "education": app["profile"].get("education"),
-                        "languages": [l["language"] for l in app["profile"].get("languages", [])],
-                        "skills": [s["skillName"] for s in app["profile"].get("skills", [])],
-                        "tags": app["profile"].get("tags", [])
+                recommendations.append(
+                    {
+                        "id": str(app["_id"]),
+                        "name": app["name"],
+                        "match_score": similarity_score,
+                        "profile": {
+                            "age": app["profile"].get("age"),
+                            "experience": len(app["profile"].get("experience", [])),
+                            "education": app["profile"].get("education"),
+                            "languages": [
+                                l["language"]
+                                for l in app["profile"].get("languages", [])
+                            ],
+                            "skills": [
+                                s["skillName"] for s in app["profile"].get("skills", [])
+                            ],
+                            "tags": app["profile"].get("tags", []),
+                        },
                     }
-                })
+                )
 
             # Sort by match score
             recommendations.sort(key=lambda x: x["match_score"], reverse=True)
@@ -604,85 +645,86 @@ def recommend_applicants():
         error_info = handle_exception(*sys.exc_info())
         return jsonify({"error": error_info}), 500
 
+
 @app.route("/api/applicants/find-similar", methods=["POST"])
 @cross_origin()
 def find_similar():
     """
-        Find similar applicants to a given profile.
+    Find similar applicants to a given profile.
 
-        Input JSON Format:
+    Input JSON Format:
+    {
+        "profile": {
+            "name": "Test User",
+            "age": 25,
+            "experience": [
+                {
+                    "company": "Tech Corp",
+                    "position": "Software Engineer",
+                    "startYear": "2020-01-01",
+                    "endYear": "2022-12-31"
+                }
+            ],
+            "weekly_hours": 40,
+            "languages": [
+                {"language": "English", "proficiency": "Native"},
+                {"language": "Spanish", "proficiency": "Intermediate"}
+            ],
+            "skills": [
+                {"skillName": "Python", "proficiency": "Advanced"},
+                {"skillName": "Java", "proficiency": "Intermediate"}
+            ],
+            "tags": ["IT", "Marketing"],
+            "seeking": "jobs",
+            "education": {
+                "institutionName": "MIT",
+                "institutionType": "college",
+                "major": "Computer Science",
+                "cgpa": "3.8"
+            }
+        }
+    }
+
+    Returns:
+    [
         {
+            "id": "507f1f77bcf86cd799439011",
+            "name": "Similar Candidate",
+            "similarity_score": 88.5,
+            "match_factors": {
+                "skills_match": 3,
+                "language_match": 2,
+                "tags_match": 2,
+                "education_level_match": true,
+                "experience_gap": 1
+            },
             "profile": {
-                "name": "Test User",
-                "age": 25,
-                "experience": [
-                    {
-                        "company": "Tech Corp",
-                        "position": "Software Engineer",
-                        "startYear": "2020-01-01",
-                        "endYear": "2022-12-31"
-                    }
-                ],
-                "weekly_hours": 40,
-                "languages": [
-                    {"language": "English", "proficiency": "Native"},
-                    {"language": "Spanish", "proficiency": "Intermediate"}
-                ],
-                "skills": [
-                    {"skillName": "Python", "proficiency": "Advanced"},
-                    {"skillName": "Java", "proficiency": "Intermediate"}
-                ],
-                "tags": ["IT", "Marketing"],
-                "seeking": "jobs",
+                "age": 26,
+                "experience": 3,
                 "education": {
-                    "institutionName": "MIT",
+                    "institutionName": "Stanford",
                     "institutionType": "college",
                     "major": "Computer Science",
-                    "cgpa": "3.8"
-                }
-            }
-        }
-
-        Returns:
-        [
-            {
-                "id": "507f1f77bcf86cd799439011",
-                "name": "Similar Candidate",
-                "similarity_score": 88.5,
-                "match_factors": {
-                    "skills_match": 3,
-                    "language_match": 2,
-                    "tags_match": 2,
-                    "education_level_match": true,
-                    "experience_gap": 1
+                    "cgpa": "3.9"
                 },
-                "profile": {
-                    "age": 26,
-                    "experience": 3,
-                    "education": {
-                        "institutionName": "Stanford",
-                        "institutionType": "college",
-                        "major": "Computer Science",
-                        "cgpa": "3.9"
-                    },
-                    "skills": [...],
-                    "languages": [...],
-                    "tags": [...],
-                    "seeking": "jobs"
-                }
-            },
-            // ... more similar profiles
-        ]
-
-        Error Response:
-        {
-            "error": {
-                "type": "ValueError",
-                "message": "Invalid profile format",
-                "traceback": "..."
+                "skills": [...],
+                "languages": [...],
+                "tags": [...],
+                "seeking": "jobs"
             }
+        },
+        // ... more similar profiles
+    ]
+
+    Error Response:
+    {
+        "error": {
+            "type": "ValueError",
+            "message": "Invalid profile format",
+            "traceback": "..."
         }
-        """
+    }
+    """
     try:
         data = request.get_json()
         profile = data.get("profile", {})
@@ -694,14 +736,14 @@ def find_similar():
             "age": profile.get("age", 0),
             "experience": len(profile.get("experience", [])),
             "weekly_hours": profile.get("weekly_hours", 40),
-            "profile": profile  # Include full profile for detailed matching
+            "profile": profile,  # Include full profile for detailed matching
         }
 
         # Add language features
         for lang in LANGUAGES:
             target_features[lang] = int(
-                lang.lower() in
-                [l["language"].lower() for l in profile.get("languages", [])]
+                lang.lower()
+                in [l["language"].lower() for l in profile.get("languages", [])]
             )
 
         # Add tags features
@@ -719,56 +761,57 @@ def find_similar():
         error_info = handle_exception(*sys.exc_info())
         return jsonify({"error": error_info}), 500
 
+
 @app.route("/api/applicants/find", methods=["GET", "POST"])
 @cross_origin()
 def get_applicant():
     """
-        Get detailed information about a specific applicant.
+    Get detailed information about a specific applicant.
 
-        Input JSON Format:
-        {
-            "id": "507f1f77bcf86cd799439011"
-        }
+    Input JSON Format:
+    {
+        "id": "507f1f77bcf86cd799439011"
+    }
 
-        Returns:
-        {
-            "_id": "507f1f77bcf86cd799439011",
-            "name": "John Doe",
-            "username": "johndoe",
-            "email": "john.doe@example.com",
-            "type": "fresher",
-            "profile": {
-                "phoneNumber": "+1234567890",
-                "age": 25,
-                "education": {
-                    "institutionName": "MIT",
-                    "institutionType": "college",
-                    "major": "Computer Science",
-                    "cgpa": "3.8",
-                    "startYear": 2019,
-                    "endYear": 2023,
-                    "year": 4
-                },
-                "experience": [...],
-                "projects": [...],
-                "skills": [...],
-                "languages": [...],
-                "tags": [...],
-                "seeking": "jobs"
+    Returns:
+    {
+        "_id": "507f1f77bcf86cd799439011",
+        "name": "John Doe",
+        "username": "johndoe",
+        "email": "john.doe@example.com",
+        "type": "fresher",
+        "profile": {
+            "phoneNumber": "+1234567890",
+            "age": 25,
+            "education": {
+                "institutionName": "MIT",
+                "institutionType": "college",
+                "major": "Computer Science",
+                "cgpa": "3.8",
+                "startYear": 2019,
+                "endYear": 2023,
+                "year": 4
             },
-            "createdAt": "2023-01-01T00:00:00Z",
-            "updatedAt": "2023-01-01T00:00:00Z"
-        }
+            "experience": [...],
+            "projects": [...],
+            "skills": [...],
+            "languages": [...],
+            "tags": [...],
+            "seeking": "jobs"
+        },
+        "createdAt": "2023-01-01T00:00:00Z",
+        "updatedAt": "2023-01-01T00:00:00Z"
+    }
 
-        Error Response:
-        {
-            "error": {
-                "type": "ValueError",
-                "message": "Invalid applicant ID",
-                "traceback": "..."
-            }
+    Error Response:
+    {
+        "error": {
+            "type": "ValueError",
+            "message": "Invalid applicant ID",
+            "traceback": "..."
         }
-        """
+    }
+    """
     try:
         data = request.get_json()
         applicant_id = data.get("id", {})
@@ -803,4 +846,4 @@ def server_error(e):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
