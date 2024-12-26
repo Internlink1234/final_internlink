@@ -24,11 +24,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Connect to MongoDB
-uri = "mongodb+srv://smitshahcloudboost:1234@cluster0.45ng0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+uri = "mongodb+srv://vipin4597:Believe%4012345@cluster0.oag3t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi("1"))
-db = client["internlink_deployment_dummy"]
+db = client["test"]
 applicants_collection = db["applicants"]
 app = Flask(__name__)
 cors = CORS(app)

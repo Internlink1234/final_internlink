@@ -344,7 +344,7 @@ def get_all_applicants():
     try:
         # Get all applicants from database
         applicants = list(applicants_collection.find({}))
-        
+
         # Clean and format response
         for applicant in applicants:
             # Remove sensitive information
@@ -353,7 +353,7 @@ def get_all_applicants():
             applicant.pop("otpExpiry", None)
             # Convert ObjectId to string
             applicant["_id"] = str(applicant["_id"])
-            
+
         return jsonify(applicants), 200
 
     except Exception as e:
