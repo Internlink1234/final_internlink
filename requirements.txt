@@ -4,3 +4,4 @@ scikit-learn
 pymongo
 bcrypt
 pandas
+openai
