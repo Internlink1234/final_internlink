@@ -13,6 +13,11 @@ from bson import ObjectId
 from datetime import datetime
 import os
 from pymongo.server_api import ServerApi
+from openai import OpenAI
+import os
+import json
+from typing import Dict, Any
+import time
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -344,7 +349,7 @@ def get_all_applicants():
     try:
         # Get all applicants from database
         applicants = list(applicants_collection.find({}))
-        
+
         # Clean and format response
         for applicant in applicants:
             # Remove sensitive information
@@ -353,7 +358,7 @@ def get_all_applicants():
             applicant.pop("otpExpiry", None)
             # Convert ObjectId to string
             applicant["_id"] = str(applicant["_id"])
-            
+
         return jsonify(applicants), 200
 
     except Exception as e:
@@ -1080,6 +1085,206 @@ def get_applicant():
     except Exception as e:
         error_info = handle_exception(*sys.exc_info())
         return jsonify({"error": error_info}), 500
+
+
+DEEPSEEK_API_KEY = "sk-c7288debcb7b47cd89f1dd43ba1dccfb"
+if not DEEPSEEK_API_KEY:
+    raise ValueError("DEEPSEEK_API_KEY environment variable not set")
+
+try:
+    deepseek_client = OpenAI(
+        api_key=DEEPSEEK_API_KEY,
+        base_url="https://api.deepseek.com/v1"  # Updated base URL
+    )
+except Exception as e:
+    print(f"Error initializing DeepSeek client: {e}")
+    raise
+
+def _call_deepseek_api(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+    """Make API call to Deepseek with retry logic"""
+    max_retries = 3
+    retry_delay = 1
+    response = None
+    last_error = None
+
+    for attempt in range(max_retries):
+        try:
+            response = deepseek_client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=1024,
+                temperature=0.3
+            )
+            return {
+                "choices": [{
+                    "message": {
+                        "content": response.choices[0].message.content
+                    }
+                }]
+            }
+        except Exception as e:
+            last_error = str(e)
+            if attempt == max_retries - 1:
+                raise Exception(f"Failed to get response from DeepSeek API after {max_retries} retries. Last error: {last_error}")
+            time.sleep(retry_delay)
+        finally:
+            if response is None and attempt == max_retries - 1:
+                raise Exception(f"Maximum retries reached. Failed to get valid response from DeepSeek API. Last error: {last_error}")
+
+def _clean_response(response: Dict[str, Any]) -> Dict[str, Any]:
+    """Clean and parse the API response"""
+    try:
+        content = response["choices"][0]["message"]["content"]
+
+        # Remove markdown code blocks
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0]
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0]
+
+        # Clean the content
+        content = (
+            content.strip()  # Remove leading/trailing whitespace
+            .replace("\n", "")  # Remove newlines
+            .replace("\r", "")  # Remove carriage returns
+            .replace("\t", "")  # Remove tabs
+        )
+
+        # Remove multiple spaces
+        while "  " in content:
+            content = content.replace("  ", " ")
+
+        # Remove any potential markdown or text formatting
+        if content.startswith("`") and content.endswith("`"):
+            content = content[1:-1]
+
+        # Attempt to parse the cleaned JSON
+        return {
+            "parsed_data": json.loads(content),
+            "raw_content": content,  # Store the cleaned content
+        }
+    except json.JSONDecodeError as e:
+        return {
+            "error": f"JSON parsing error: {str(e)}",
+            "raw_content": content,
+            "original_content": response["choices"][0]["message"]["content"],
+            "parsing_failed": True,
+        }
+    except Exception as e:
+        return {
+            "error": f"Unexpected error: {str(e)}",
+            "raw_response": response,
+            "parsing_failed": True,
+        }
+
+@app.route("/api/candidates/construct", methods=["POST"])
+@cross_origin()
+def construct_candidate():
+    """
+    Construct an ideal candidate profile based on a job description using DeepSeek API.
+    """
+    try:
+        # Verify API key is set
+        if not DEEPSEEK_API_KEY:
+            return jsonify({
+                "error": "DeepSeek API key not configured",
+                "success": False
+            }), 500
+
+        job_data = request.get_json()
+
+        # Construct the system prompt
+        system_prompt = """You are an expert HR professional specializing in creating ideal candidate profiles based on job descriptions.
+        Your task is to analyze the job requirements and create a detailed candidate profile that would be perfect for the position.
+
+        The output should be a JSON object representing the ideal candidate's profile with the following structure:
+        {
+            "name": "Ideal Candidate",
+            "profile": {
+                "age": number,
+                "education": {
+                    "institutionType": string,
+                    "major": string,
+                    "cgpa": string
+                },
+                "experience": [{
+                    "company": string,
+                    "position": string,
+                    "duration": string
+                }],
+                "skills": [{
+                    "skillName": string,
+                    "proficiency": string
+                }],
+                "languages": [{
+                    "language": string,
+                    "proficiency": string
+                }],
+                "tags": [string],
+                "seeking": string
+            }
+        }
+
+        Ensure:
+        1. The profile matches the job requirements exactly
+        2. Skills and experience levels are appropriate
+        3. Education requirements are met
+        4. Language proficiencies are specified
+        5. Age is appropriate for the role
+        6. All values are realistic and justified
+
+        Return only the JSON object, with no additional text or formatting."""
+
+        # Construct the user prompt
+        user_prompt = f"""Create an ideal candidate profile for the following job:
+
+        Position: {job_data.get('jobPosition', '')}
+        Description: {job_data.get('description', '')}
+        Experience Required: {job_data.get('experienceRequired', '')}
+        Skills Required: {', '.join(job_data.get('skillsRequired', []))}
+        Qualifications: {', '.join(job_data.get('qualifications', []))}
+        Job Requirements: {', '.join(job_data.get('jobRequirements', []))}
+        English Requirements: {job_data.get('englishRequirements', '')}
+        Employment Type: {job_data.get('employmentType', '')}
+        Location: {', '.join(job_data.get('location', []))}"""
+
+        try:
+            # Call DeepSeek API with retry logic
+            api_response = _call_deepseek_api(system_prompt, user_prompt)
+        except Exception as e:
+            return jsonify({
+                "error": f"DeepSeek API call failed: {str(e)}",
+                "success": False
+            }), 500
+
+        # Clean and parse the response
+        cleaned_response = _clean_response(api_response)
+
+        # Check if parsing failed
+        if cleaned_response.get("parsing_failed"):
+            return jsonify({
+                "error": cleaned_response.get("error", "Failed to parse response"),
+                "success": False,
+                "raw_response": cleaned_response.get("raw_content"),
+                "api_response": api_response
+            }), 500
+
+        # Return the cleaned and parsed response
+        return jsonify({
+            "success": True,
+            "data": cleaned_response["parsed_data"],
+            "raw_response": cleaned_response.get("raw_content")
+        }), 200
+
+    except Exception as e:
+        error_info = handle_exception(*sys.exc_info())
+        return jsonify({
+            "error": error_info,
+            "success": False
+        }), 500
 
 
 @app.errorhandler(404)
