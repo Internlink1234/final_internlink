@@ -74,47 +74,62 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     }
 
 
-def serialize_mongo_doc(doc):
-    """Convert MongoDB document to JSON-serializable format."""
-    if isinstance(doc, dict):
-        return {k: serialize_mongo_doc(v) for k, v in doc.items()}
-    elif isinstance(doc, list):
-        return [serialize_mongo_doc(v) for v in doc]
-    elif isinstance(doc, ObjectId):
-        return str(doc)
-    else:
-        return doc
-
-
 def transform_mongodb_to_features(applicant):
-    """Convert MongoDB document to feature vector"""
+    # Current version only handles basic profile info
+    # Need to add new fields
     features = {
         "uid": str(applicant["_id"]),
         "name": applicant["name"],
         "age": applicant["profile"].get("age", 0),
         "experience": len(applicant["profile"].get("experience", [])),
-        "weekly_hours": 40,  # Default
-        "profile": applicant["profile"],  # Add full profile for skills comparison
+        "weekly_hours": 40,
+        "profile": applicant["profile"],
+        # Add new features
+        "personality_score": calculate_personality_score(applicant["profile"].get("personalityBlueprint", [])),
+        "education_level": get_education_level(applicant["profile"].get("education", {})),
+        "total_applications": len(applicant.get("appliedJobs", [])),
+        "is_resume_parsed": applicant.get("isResumeParsed", False),
     }
 
     # Add language features
     for lang in LANGUAGES:
         features[lang] = int(
-            any(
-                l["language"].lower() == lang.lower()
-                for l in applicant["profile"].get("languages", [])
-            )
+            any(l["language"].lower() == lang.lower()
+                for l in applicant["profile"].get("languages", []))
         )
 
     # Add tags features
     for tag in TAGS:
         features[tag] = int(tag in applicant["profile"].get("tags", []))
 
-    # Add seeking type
     features["seeking"] = applicant["profile"].get("seeking", "jobs")
 
     return features
 
+def calculate_personality_score(blueprint):
+    if not blueprint:
+        return 0
+    # Calculate a normalized score based on personality answers
+    # Assuming max option is 4
+    return sum(answer["selectedOption"] for answer in blueprint) / (len(blueprint) * 4)
+
+def get_education_level(education):
+    if not education:
+        return 0
+    # Map education year to a numerical level
+    return education.get("year", 0)
+
+
+def calculate_personality_match(blueprint1, blueprint2):
+    if not blueprint1 or not blueprint2:
+        return 0
+
+    matching_answers = sum(
+        1 for a1, a2 in zip(blueprint1, blueprint2)
+        if a1["questionId"] == a2["questionId"] and
+        a1["selectedOption"] == a2["selectedOption"]
+    )
+    return (matching_answers / len(blueprint1)) * 100 if blueprint1 else 0
 
 def calculate_similarity(applicant1, applicant2):
     """Calculate similarity between two applicants with weighted features"""
@@ -130,11 +145,12 @@ def calculate_similarity(applicant1, applicant2):
     # Weights for different feature types
     weights = {
         "age": 0.10,
-        "experience": 0.20,
+        "experience": 0.15,
         "languages": 0.15,
         "tags": 0.15,
-        "skills": 0.25,
+        "skills": 0.20,
         "education": 0.15,
+        "personality": 0.10  # New weight for personality matching
     }
 
     # Calculate weighted components
@@ -180,14 +196,19 @@ def calculate_similarity(applicant1, applicant2):
 
         edu_sim = (same_major + same_level + (1 - cgpa_diff)) / 3
 
-    # Calculate weighted similarity
+    personality_sim = 1 - abs(
+        applicant1.get("personality_score", 0) -
+        applicant2.get("personality_score", 0)
+    )
+
     total_similarity = (
-        weights["age"] * age_sim
-        + weights["experience"] * exp_sim
-        + weights["languages"] * lang_sim
-        + weights["tags"] * tags_sim
-        + weights["skills"] * skills_sim
-        + weights["education"] * edu_sim
+        weights["age"] * age_sim +
+        weights["experience"] * exp_sim +
+        weights["languages"] * lang_sim +
+        weights["tags"] * tags_sim +
+        weights["skills"] * skills_sim +
+        weights["education"] * edu_sim +
+        weights["personality"] * personality_sim
     )
 
     return round(total_similarity * 100, 2)
@@ -1015,33 +1036,54 @@ def find_similar():
         data = request.get_json()
         profile = data.get("profile", {})
 
-        # Convert incoming profile to feature format
+        # Add validation for required fields
+        if not profile:
+            return jsonify({"error": "Profile is required"}), 400
+
+        # Convert incoming profile to feature format with new fields
         target_features = {
             "uid": "temp",
             "name": profile.get("name", "Temporary"),
             "age": profile.get("age", 0),
             "experience": len(profile.get("experience", [])),
             "weekly_hours": profile.get("weekly_hours", 40),
-            "profile": profile,  # Include full profile for detailed matching
+            "personality_score": calculate_personality_score(
+                profile.get("personalityBlueprint", [])
+            ),
+            "education_level": get_education_level(profile.get("education", {})),
+            "profile": profile,
         }
 
-        # Add language features
-        for lang in LANGUAGES:
-            target_features[lang] = int(
-                lang.lower()
-                in [l["language"].lower() for l in profile.get("languages", [])]
-            )
+        # Add language and tag features as before...
 
-        # Add tags features
-        for tag in TAGS:
-            target_features[tag] = int(tag in profile.get("tags", []))
-
-        target_features["seeking"] = profile.get("seeking", "jobs")
-
-        # Find similar applicants with enhanced matching
         similar_applicants = find_similar_applicants(target_features)
 
-        return jsonify(similar_applicants), 200
+        # Enhanced response format
+        results = []
+        for app, score in similar_applicants:
+            applicant = applicants_collection.find_one({"_id": ObjectId(app["uid"])})
+            if applicant:
+                results.append({
+                    "id": str(applicant["_id"]),
+                    "name": applicant["name"],
+                    "similarity_score": score,
+                    "personality_match": calculate_personality_match(
+                        profile.get("personalityBlueprint", []),
+                        applicant["profile"].get("personalityBlueprint", [])
+                    ),
+                    "profile": {
+                        "age": applicant["profile"].get("age"),
+                        "experience": len(applicant["profile"].get("experience", [])),
+                        "education": applicant["profile"].get("education"),
+                        "languages": [l["language"] for l in applicant["profile"].get("languages", [])],
+                        "skills": [s["skillName"] for s in applicant["profile"].get("skills", [])],
+                        "tags": applicant["profile"].get("tags", []),
+                        "isResumeParsed": applicant.get("isResumeParsed", False),
+                        "totalApplications": len(applicant.get("appliedJobs", [])),
+                    }
+                })
+
+        return jsonify(results), 200
 
     except Exception as e:
         error_info = handle_exception(*sys.exc_info())
