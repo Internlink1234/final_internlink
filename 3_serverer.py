@@ -70,6 +70,18 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     }
 
 
+def serialize_mongo_doc(doc):
+    """Convert MongoDB document to JSON-serializable format."""
+    if isinstance(doc, dict):
+        return {k: serialize_mongo_doc(v) for k, v in doc.items()}
+    elif isinstance(doc, list):
+        return [serialize_mongo_doc(v) for v in doc]
+    elif isinstance(doc, ObjectId):
+        return str(doc)
+    else:
+        return doc
+
+
 def transform_mongodb_to_features(applicant):
     """Convert MongoDB document to feature vector"""
     features = {
@@ -350,16 +362,34 @@ def get_all_applicants():
         # Get all applicants from database
         applicants = list(applicants_collection.find({}))
 
-        # Clean and format response
+        # Convert applicants to JSON-serializable format
+        serialized_applicants = []
         for applicant in applicants:
-            # Remove sensitive information
-            applicant.pop("password", None)
-            applicant.pop("otp", None)
-            applicant.pop("otpExpiry", None)
-            # Convert ObjectId to string
-            applicant["_id"] = str(applicant["_id"])
+            # Create a copy of the applicant dict
+            applicant_dict = dict(applicant)
 
-        return jsonify(applicants), 200
+            # Convert ObjectId to string
+            applicant_dict['_id'] = str(applicant_dict['_id'])
+
+            # Remove sensitive information
+            applicant_dict.pop('password', None)
+            applicant_dict.pop('otp', None)
+            applicant_dict.pop('otpExpiry', None)
+
+            # Convert any nested ObjectIds to strings
+            if 'profile' in applicant_dict:
+                if 'education' in applicant_dict['profile']:
+                    if '_id' in applicant_dict['profile']['education']:
+                        applicant_dict['profile']['education']['_id'] = str(applicant_dict['profile']['education']['_id'])
+
+                if 'experience' in applicant_dict['profile']:
+                    for exp in applicant_dict['profile']['experience']:
+                        if '_id' in exp:
+                            exp['_id'] = str(exp['_id'])
+
+            serialized_applicants.append(applicant_dict)
+
+        return jsonify(serialized_applicants), 200
 
     except Exception as e:
         error_info = handle_exception(*sys.exc_info())
