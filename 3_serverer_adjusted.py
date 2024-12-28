@@ -1,27 +1,23 @@
-from numpy import int8
-from flask import Flask, request, jsonify
-from flask_cors import CORS, cross_origin
 import json
-import pandas as pd
-from sklearn.neighbors import NearestNeighbors
-from sklearn.metrics.pairwise import cosine_similarity
 import logging
-import traceback
+import os
 import sys
-from pymongo import MongoClient
-from bson import ObjectId
-from datetime import datetime
-import os
-from pymongo.server_api import ServerApi
-from openai import OpenAI
-import os
-import json
-from typing import Dict, Any
 import time
-from datetime import datetime, date
+import traceback
+from datetime import date, datetime
 from decimal import Decimal
+from typing import Any, Dict
+
+import pandas as pd
 from bson import ObjectId
-import logging
+from flask import Flask, jsonify, request
+from flask_cors import CORS, cross_origin
+from numpy import int8
+from openai import OpenAI
+from pymongo import MongoClient
+from pymongo.server_api import ServerApi
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neighbors import NearestNeighbors
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -85,8 +81,12 @@ def transform_mongodb_to_features(applicant):
         "weekly_hours": 40,
         "profile": applicant["profile"],
         # Add new features
-        "personality_score": calculate_personality_score(applicant["profile"].get("personalityBlueprint", [])),
-        "education_level": get_education_level(applicant["profile"].get("education", {})),
+        "personality_score": calculate_personality_score(
+            applicant["profile"].get("personalityBlueprint", [])
+        ),
+        "education_level": get_education_level(
+            applicant["profile"].get("education", {})
+        ),
         "total_applications": len(applicant.get("appliedJobs", [])),
         "is_resume_parsed": applicant.get("isResumeParsed", False),
     }
@@ -94,8 +94,10 @@ def transform_mongodb_to_features(applicant):
     # Add language features
     for lang in LANGUAGES:
         features[lang] = int(
-            any(l["language"].lower() == lang.lower()
-                for l in applicant["profile"].get("languages", []))
+            any(
+                l["language"].lower() == lang.lower()
+                for l in applicant["profile"].get("languages", [])
+            )
         )
 
     # Add tags features
@@ -106,12 +108,14 @@ def transform_mongodb_to_features(applicant):
 
     return features
 
+
 def calculate_personality_score(blueprint):
     if not blueprint:
         return 0
     # Calculate a normalized score based on personality answers
     # Assuming max option is 4
     return sum(answer["selectedOption"] for answer in blueprint) / (len(blueprint) * 4)
+
 
 def get_education_level(education):
     if not education:
@@ -125,11 +129,13 @@ def calculate_personality_match(blueprint1, blueprint2):
         return 0
 
     matching_answers = sum(
-        1 for a1, a2 in zip(blueprint1, blueprint2)
-        if a1["questionId"] == a2["questionId"] and
-        a1["selectedOption"] == a2["selectedOption"]
+        1
+        for a1, a2 in zip(blueprint1, blueprint2)
+        if a1["questionId"] == a2["questionId"]
+        and a1["selectedOption"] == a2["selectedOption"]
     )
     return (matching_answers / len(blueprint1)) * 100 if blueprint1 else 0
+
 
 def calculate_similarity(applicant1, applicant2):
     """Calculate similarity between two applicants with weighted features"""
@@ -150,7 +156,7 @@ def calculate_similarity(applicant1, applicant2):
         "tags": 0.15,
         "skills": 0.20,
         "education": 0.15,
-        "personality": 0.10  # New weight for personality matching
+        "personality": 0.10,  # New weight for personality matching
     }
 
     # Calculate weighted components
@@ -197,18 +203,17 @@ def calculate_similarity(applicant1, applicant2):
         edu_sim = (same_major + same_level + (1 - cgpa_diff)) / 3
 
     personality_sim = 1 - abs(
-        applicant1.get("personality_score", 0) -
-        applicant2.get("personality_score", 0)
+        applicant1.get("personality_score", 0) - applicant2.get("personality_score", 0)
     )
 
     total_similarity = (
-        weights["age"] * age_sim +
-        weights["experience"] * exp_sim +
-        weights["languages"] * lang_sim +
-        weights["tags"] * tags_sim +
-        weights["skills"] * skills_sim +
-        weights["education"] * edu_sim +
-        weights["personality"] * personality_sim
+        weights["age"] * age_sim
+        + weights["experience"] * exp_sim
+        + weights["languages"] * lang_sim
+        + weights["tags"] * tags_sim
+        + weights["skills"] * skills_sim
+        + weights["education"] * edu_sim
+        + weights["personality"] * personality_sim
     )
 
     return round(total_similarity * 100, 2)
@@ -351,13 +356,42 @@ def find_similar_applicants(target_applicant, k=5):
 
 @app.route("/health", methods=["GET"])
 def health_check():
-    """Health check endpoint"""
+    """
+    Health check endpoint to verify MongoDB connection and service status.
+    """
     try:
-        # Test MongoDB connection
+        # Test MongoDB connection by fetching a single document
         applicants_collection.find_one()
-        return jsonify({"status": "healthy"}), 200
+        return (
+            jsonify(
+                {
+                    "status": "healthy",
+                    "details": {
+                        "mongo_db_connection": "successful",
+                        "service_status": "operational",
+                    },
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            ),
+            200,
+        )
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        # Log the error for debugging purposes
+        app.logger.error(f"Health check failed: {str(e)}")
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "details": {
+                        "mongo_db_connection": "failed",
+                        "service_status": "unavailable",
+                    },
+                    "message": str(e),
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            ),
+            500,
+        )
 
 
 def serialize_mongo_doc(doc):
@@ -370,7 +404,7 @@ def serialize_mongo_doc(doc):
         return str(doc)
     elif isinstance(doc, bytes):
         try:
-            return doc.decode('utf-8')
+            return doc.decode("utf-8")
         except UnicodeDecodeError:
             return str(doc)
     elif isinstance(doc, (datetime, date)):
@@ -404,9 +438,9 @@ def get_all_applicants():
                 serialized_doc = serialize_mongo_doc(applicant)
 
                 # Remove sensitive information
-                serialized_doc.pop('password', None)
-                serialized_doc.pop('otp', None)
-                serialized_doc.pop('otpExpiry', None)
+                serialized_doc.pop("password", None)
+                serialized_doc.pop("otp", None)
+                serialized_doc.pop("otpExpiry", None)
 
                 serialized_applicants.append(serialized_doc)
             except Exception as e:
@@ -1063,25 +1097,35 @@ def find_similar():
         for app, score in similar_applicants:
             applicant = applicants_collection.find_one({"_id": ObjectId(app["uid"])})
             if applicant:
-                results.append({
-                    "id": str(applicant["_id"]),
-                    "name": applicant["name"],
-                    "similarity_score": score,
-                    "personality_match": calculate_personality_match(
-                        profile.get("personalityBlueprint", []),
-                        applicant["profile"].get("personalityBlueprint", [])
-                    ),
-                    "profile": {
-                        "age": applicant["profile"].get("age"),
-                        "experience": len(applicant["profile"].get("experience", [])),
-                        "education": applicant["profile"].get("education"),
-                        "languages": [l["language"] for l in applicant["profile"].get("languages", [])],
-                        "skills": [s["skillName"] for s in applicant["profile"].get("skills", [])],
-                        "tags": applicant["profile"].get("tags", []),
-                        "isResumeParsed": applicant.get("isResumeParsed", False),
-                        "totalApplications": len(applicant.get("appliedJobs", [])),
+                results.append(
+                    {
+                        "id": str(applicant["_id"]),
+                        "name": applicant["name"],
+                        "similarity_score": score,
+                        "personality_match": calculate_personality_match(
+                            profile.get("personalityBlueprint", []),
+                            applicant["profile"].get("personalityBlueprint", []),
+                        ),
+                        "profile": {
+                            "age": applicant["profile"].get("age"),
+                            "experience": len(
+                                applicant["profile"].get("experience", [])
+                            ),
+                            "education": applicant["profile"].get("education"),
+                            "languages": [
+                                l["language"]
+                                for l in applicant["profile"].get("languages", [])
+                            ],
+                            "skills": [
+                                s["skillName"]
+                                for s in applicant["profile"].get("skills", [])
+                            ],
+                            "tags": applicant["profile"].get("tags", []),
+                            "isResumeParsed": applicant.get("isResumeParsed", False),
+                            "totalApplications": len(applicant.get("appliedJobs", [])),
+                        },
                     }
-                })
+                )
 
         return jsonify(results), 200
 
@@ -1170,7 +1214,7 @@ if not DEEPSEEK_API_KEY:
 try:
     deepseek_client = OpenAI(
         api_key=DEEPSEEK_API_KEY,
-        base_url="https://api.deepseek.com/v1"  # Updated base URL
+        base_url="https://api.deepseek.com/v1",  # Updated base URL
     )
 except Exception as e:
     print(f"Error initializing DeepSeek client: {e}")
@@ -1189,26 +1233,29 @@ def _call_deepseek_api(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
                 model="deepseek-chat",
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 max_tokens=1024,
-                temperature=0.3
+                temperature=0.3,
             )
             return {
-                "choices": [{
-                    "message": {
-                        "content": response.choices[0].message.content
-                    }
-                }]
+                "choices": [
+                    {"message": {"content": response.choices[0].message.content}}
+                ]
             }
         except Exception as e:
             last_error = str(e)
             if attempt == max_retries - 1:
-                raise Exception(f"Failed to get response from DeepSeek API after {max_retries} retries. Last error: {last_error}")
+                raise Exception(
+                    f"Failed to get response from DeepSeek API after {max_retries} retries. Last error: {last_error}"
+                )
             time.sleep(retry_delay)
         finally:
             if response is None and attempt == max_retries - 1:
-                raise Exception(f"Maximum retries reached. Failed to get valid response from DeepSeek API. Last error: {last_error}")
+                raise Exception(
+                    f"Maximum retries reached. Failed to get valid response from DeepSeek API. Last error: {last_error}"
+                )
+
 
 def _clean_response(response: Dict[str, Any]) -> Dict[str, Any]:
     """Clean and parse the API response"""
@@ -1256,6 +1303,7 @@ def _clean_response(response: Dict[str, Any]) -> Dict[str, Any]:
             "parsing_failed": True,
         }
 
+
 @app.route("/api/candidates/construct", methods=["POST"])
 @cross_origin()
 def construct_candidate():
@@ -1265,10 +1313,10 @@ def construct_candidate():
     try:
         # Verify API key is set
         if not DEEPSEEK_API_KEY:
-            return jsonify({
-                "error": "DeepSeek API key not configured",
-                "success": False
-            }), 500
+            return (
+                jsonify({"error": "DeepSeek API key not configured", "success": False}),
+                500,
+            )
 
         job_data = request.get_json()
 
@@ -1331,36 +1379,47 @@ def construct_candidate():
             # Call DeepSeek API with retry logic
             api_response = _call_deepseek_api(system_prompt, user_prompt)
         except Exception as e:
-            return jsonify({
-                "error": f"DeepSeek API call failed: {str(e)}",
-                "success": False
-            }), 500
+            return (
+                jsonify(
+                    {"error": f"DeepSeek API call failed: {str(e)}", "success": False}
+                ),
+                500,
+            )
 
         # Clean and parse the response
         cleaned_response = _clean_response(api_response)
 
         # Check if parsing failed
         if cleaned_response.get("parsing_failed"):
-            return jsonify({
-                "error": cleaned_response.get("error", "Failed to parse response"),
-                "success": False,
-                "raw_response": cleaned_response.get("raw_content"),
-                "api_response": api_response
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "error": cleaned_response.get(
+                            "error", "Failed to parse response"
+                        ),
+                        "success": False,
+                        "raw_response": cleaned_response.get("raw_content"),
+                        "api_response": api_response,
+                    }
+                ),
+                500,
+            )
 
         # Return the cleaned and parsed response
-        return jsonify({
-            "success": True,
-            "data": cleaned_response["parsed_data"],
-            "raw_response": cleaned_response.get("raw_content")
-        }), 200
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": cleaned_response["parsed_data"],
+                    "raw_response": cleaned_response.get("raw_content"),
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         error_info = handle_exception(*sys.exc_info())
-        return jsonify({
-            "error": error_info,
-            "success": False
-        }), 500
+        return jsonify({"error": error_info, "success": False}), 500
 
 
 @app.errorhandler(404)
