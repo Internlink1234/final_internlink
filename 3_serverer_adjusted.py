@@ -1530,41 +1530,117 @@ def construct_candidate():
         system_prompt = """You are an expert HR professional specializing in creating ideal candidate profiles based on job descriptions.
         Your task is to analyze the job requirements and create a detailed candidate profile that would be perfect for the position.
 
-        The output should be a JSON object representing the ideal candidate's profile with the following structure:
+        The output should be a JSON object with this exact structure:
         {
             "name": "Ideal Candidate",
             "profile": {
-                "age": number,
+                "age": number (between 20-45),
                 "education": {
-                    "institutionType": string,
+                    "institutionName": string,
+                    "institutionType": "college",
                     "major": string,
-                    "cgpa": string
+                    "cgpa": string (format: "3.8"),
+                    "year": number (1-4)
                 },
-                "experience": [{
-                    "company": string,
-                    "position": string,
-                    "duration": string
-                }],
-                "skills": [{
-                    "skillName": string,
-                    "proficiency": string
-                }],
-                "languages": [{
-                    "language": string,
-                    "proficiency": string
-                }],
-                "tags": [string],
-                "seeking": string
+                "experience": [
+                    {
+                        "company": string,
+                        "position": string,
+                        "startYear": string (YYYY format),
+                        "endYear": string (YYYY format),
+                        "description": string
+                    }
+                ],
+                "skills": [
+                    {
+                        "skillName": string,
+                        "proficiency": string (one of: "Beginner", "Intermediate", "Advanced")
+                    }
+                ],
+                "languages": [
+                    {
+                        "language": string,
+                        "proficiency": string (one of: "Beginner", "Intermediate", "Advanced", "Native")
+                    }
+                ],
+                "tags": array of strings (from: ["IT", "Marketing", "Finance and Accounting", "Sales", "Human Resources", "Legal", "Retail", "Customer Service"]),
+                "seeking": string (one of: "internship", "jobs"),
+                "personalityBlueprint": [
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d518",
+                        "selectedOption": number (1-5),
+                        "trait": "Openness/Intuition"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d519",
+                        "selectedOption": number (1-5),
+                        "trait": "Conscientiousness"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d51a",
+                        "selectedOption": number (1-5),
+                        "trait": "Extraversion"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d51b",
+                        "selectedOption": number (1-5),
+                        "trait": "Agreeableness"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d51c",
+                        "selectedOption": number (1-5),
+                        "trait": "Emotional Stability"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d51d",
+                        "selectedOption": number (1-5),
+                        "trait": "Decision Making"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d51e",
+                        "selectedOption": number (1-5),
+                        "trait": "Workplace Behavior"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d51f",
+                        "selectedOption": number (1-5),
+                        "trait": "Risk Taking"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d520",
+                        "selectedOption": number (1-5),
+                        "trait": "Flexibility"
+                    },
+                    {
+                        "questionId": "67540aa95bada2c0c1b5d521",
+                        "selectedOption": number (1-5),
+                        "trait": "Social Sensitivity"
+                    }
+                ]
             }
         }
 
-        Ensure:
-        1. The profile matches the job requirements exactly
-        2. Skills and experience levels are appropriate
-        3. Education requirements are met
-        4. Language proficiencies are specified
-        5. Age is appropriate for the role
-        6. All values are realistic and justified
+        Personality Trait Scoring Guide:
+        1. Openness/Intuition: 1 = Very Traditional -> 5 = Highly Innovative
+        2. Conscientiousness: 1 = Flexible/Spontaneous -> 5 = Highly Organized
+        3. Extraversion: 1 = Highly Introverted -> 5 = Highly Extraverted
+        4. Agreeableness: 1 = Task-Focused -> 5 = People-Focused
+        5. Emotional Stability: 1 = Reactive -> 5 = Resilient
+        6. Decision Making: 1 = Purely Logical -> 5 = Highly Empathetic
+        7. Workplace Behavior: 1 = Team Member -> 5 = Natural Leader
+        8. Risk Taking: 1 = Very Cautious -> 5 = Risk-Embracing
+        9. Flexibility: 1 = Structured -> 5 = Adaptable
+        10. Social Sensitivity: 1 = Direct/Task-Oriented -> 5 = Diplomatic/People-Oriented
+
+        Create a profile that:
+        1. Matches the job requirements exactly
+        2. Has realistic education and experience requirements
+        3. Includes appropriate skills and proficiency levels
+        4. Specifies required languages with proficiency levels
+        5. Selects appropriate age range for the role
+        6. Chooses personality traits that would excel in this role
+        7. Uses only the specified tags
+        8. Maintains internal consistency across all fields
 
         Return only the JSON object, with no additional text or formatting."""
 
