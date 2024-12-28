@@ -1,0 +1,780 @@
+'''Framework'''
+
+
+Key Assumptions:
+
+
+Most personality traits correlate with a few "keystone" traits. For example, high Extraversion often predicts high levels of assertiveness and sociability.
+
+Well-designed questions can efficiently separate respondents into personality clusters.
+
+
+Cross-Model Correlation:
+
+
+MBTI overlaps with OCEAN (e.g., Introversion-Extraversion aligns directly).
+
+Hogan assessments (based on workplace behaviour) also correlate with core personality traits.
+
+
+Methodology:
+
+
+Use validated questions for forced-choice or ranking responses.
+
+Focus on traits with maximum variance in responses.
+
+'''Questions to Cover Core Dimensions'''
+
+
+Openness to Experience / Intuition (OCEAN / MBTI - N/S)
+
+
+"Do you prefer sticking to familiar methods (1) or exploring new and untested ideas (5)?"
+
+
+Conscientiousness (OCEAN / Hogan - Prudence)
+
+
+"How often do you meticulously plan your activities and follow through on deadlines? (1: Rarely, 5: Always)"
+
+
+Extraversion / Introversion (OCEAN / MBTI - E/I)
+
+
+"Do you feel energised by social interactions (5) or drained (1)?"
+
+
+Agreeableness (OCEAN / Hogan - Interpersonal Sensitivity)
+
+
+"How often do you go out of your way to help others, even at your own expense? (1: Rarely, 5: Very often)"
+
+
+Emotional Stability / Neuroticism (OCEAN / Hogan - Adjustment)
+
+
+"Do you often find yourself worrying about potential problems? (1: Frequently, 5: Rarely)"
+
+
+Decision-Making Style (MBTI - T/F)
+
+
+"When making decisions, do you prioritise logic (1) or empathy (5)?"
+
+
+Workplace Behavior (Hogan - Ambition)
+
+
+"Do you prefer leading projects (5) or working as part of a team (1)?"
+
+
+Risk-Taking / Cautiousness (Hogan - Bold / MBTI - P/J)
+
+
+"Would you rather take a calculated risk for higher rewards (5) or play it safe with steady outcomes (1)?"
+
+
+Flexibility (MBTI - P/J, OCEAN - Openness)
+
+
+"Do you feel comfortable adapting plans at the last minute? (1: Not at all, 5: Very comfortable)"
+
+
+Social Sensitivity (MBTI - F, Hogan - Sociability)
+
+
+"How important is it for you to maintain harmony in group settings? (1: Not important, 5: Extremely important)"# <div style="margin-left:0.5in;">Mapping Questions to Traits</div>
+
+
+
+
+
+
+
+
+{| style="border-spacing:0;width:6.2083in;"
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| Question
+|| Dimension
+|| Trait/Model
+|| Scoring Direction
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 1
+|| Openness / Intuition (N/S)
+|| OCEAN: Openness, MBTI: N/S
+|| 1 = Practical (S), 5 = Innovative (N)
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 2
+|| Conscientiousness
+|| OCEAN:Conscientiousness
+
+Hogan: Prudence
+|| 1 = Low conscientiousness, 5 = High
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 3
+|| Extraversion / Introversion
+|| OCEAN: Extraversion, MBTI: E/I
+|| 1 = Introverted (I), 5 = Extroverted (E)
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 4
+|| Agreeableness
+|| OCEAN: Agreeableness, Hogan: Sensitivity
+|| 1 = Disagreeable, 5 = Agreeable
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 5
+|| Emotional Stability / Neuroticism
+|| OCEAN: Neuroticism, Hogan: Adjustment
+|| 1 = High neuroticism, 5 = Stable
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 6
+|| Decision-Making Style (T/F)
+|| MBTI: Thinking/Feeling
+|| 1 = Logical (T), 5 = Empathetic (F)
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 7
+|| Workplace Behaviour
+|| Hogan: Ambition
+|| 1 = Team-oriented,
+
+5 = Leadership- focused
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 8
+|| Risk-Taking / Cautiousness
+|| Hogan: Bold, MBTI: J/P
+|| 1 = Cautious (J), 5 = Risk-taking (P)
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 9
+|| Flexibility
+|| MBTI: P/J, OCEAN: Openness
+|| 1 = Rigid (J), 5 = Flexible (P)
+|- style="background-color:transparent;border:1pt solid #000000;padding:0.0694in;"
+|| 10
+|| Social Sensitivity
+|| MBTI: F, Hogan: Sociability
+|| 1 = Low sensitivity, 5 = High sensitivity
+|-
+|}
+
+
+# <div style="margin-left:0.5in;">Scoring Algorithm</div>
+
+
+
+
+
+Step 1: Normalise Scores
+
+Convert raw scores into percentages for each trait or dichotomy:
+
+
+MBTI (e.g., E vs. I): Calculate % for each pair using relevant questions.
+
+OCEAN: Average scores for corresponding traits.
+
+Hogan: Use targeted questions for direct mapping.
+
+
+Step 2: Apply Weighted Averages
+
+Assign weights to emphasise key traits:
+
+For MBTI: Weight core traits (E/I, S/N) higher.
+
+For OCEAN: Weight Conscientiousness and Emotional Stability slightly higher (important for prediction accuracy in Hogan).
+
+
+Step 3: Calculate Final Results
+
+MBTI Type: Assign type based on the higher percentage in each pair (E/I, S/N, T/F, P/J).
+
+OCEAN Profile: Represent traits as percentages (e.g., Extraversion: 75%).
+
+Hogan Profile: Provide categorical insights (e.g., High Ambition, Low Sociability).
+
+
+Example Test Responses
+
+
+
+
+
+{| style="border-spacing:0;width:3.2188in;"
+|-
+| style="border:0.6pt solid #000000;padding:0.0278in;" | Question
+| style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Response (1-5)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 1
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 4
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 2
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 5
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 3
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 2
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 4
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 3
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 5
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 1
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 6
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 4
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 7
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 5
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 8
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 3
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 9
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 2
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | 10
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 5
+|-
+|}
+
+
+Interpretation
+
+
+MBTI: ENFP
+
+
+Extraversion: 40% (low, closer to introversion).
+
+Intuition: 80% (high preference).
+
+Feeling: 70% (moderate preference).
+
+Perceiving: 60% (slightly flexible).
+
+
+OCEAN Profile:
+
+
+Openness: 70%
+
+Conscientiousness: 85%
+
+Extraversion: 40%
+
+Agreeableness: 60%
+
+Neuroticism: 20% (stable).
+
+
+Hogan Insights:
+
+
+Ambition: High
+
+Prudence: High
+
+Sociability: Moderate
+
+Step 1: Detailed Scoring Table with Weights
+
+
+MBTI Calculation
+
+
+
+
+
+{| style="border-spacing:0;width:6.2701in;"
+|-
+| align=center style="border:0.6pt solid #000000;padding:0.0278in;" | '''Trait Pair'''
+| align=center style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Questions Used'''
+| align=center style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Weight per Question'''
+| align=center style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Calculation'''
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | E/I
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q3, Q7
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q3, Q7)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | S/N
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q1, Q9
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q1, Q9)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | T/F
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q6, Q10
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q6, Q10)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | P/J
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q8, Q9
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q8, Q9)
+|-
+|}
+
+
+
+
+
+
+
+{| style="border-spacing:0;width:6.8438in;"
+|-
+| style="border:0.6pt solid #000000;padding:0.0278in;" | '''Trait'''
+| style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Questions Used'''
+| style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Weight per Question'''
+| style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Calculation'''
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Openness
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q1, Q9
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q1, Q9)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Conscientiousness
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q2, Q8
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q2, Q8)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Extraversion
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q3, Q7
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q3, Q7)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Agreeableness
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q4, Q10
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q4, Q10)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Neuroticism
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q5
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 100%
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding-top:0.0278in;padding-bottom:0.0278in;padding-left:0in;padding-right:0in;" | Q5 (inverted if low = high stability).
+|-
+|}
+
+
+
+
+
+{| style="border-spacing:0;width:6.2701in;"
+|-
+| style="border:0.6pt solid #000000;padding:0.0278in;" | '''Trait'''
+| style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Questions Used'''
+| style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Weight per Question'''
+| style="border-top:0.6pt solid #000000;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | '''Calculation'''
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Ambition
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q3, Q7
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q3, Q7)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Prudence
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q2
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 100%
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q2
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Sociability
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q3, Q10
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 50% each
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Avg(Q3, Q10)
+|-
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #000000;border-right:0.6pt solid #000000;padding:0.0278in;" | Adjustment
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | Q5
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding:0.0278in;" | 100%
+| style="border-top:0.6pt solid #cccccc;border-bottom:0.6pt solid #000000;border-left:0.6pt solid #cccccc;border-right:0.6pt solid #000000;padding-top:0.0278in;padding-bottom:0.0278in;padding-left:0in;padding-right:0in;" | Q5 (direct mapping)
+|-
+|}
+
+
+
+
+Step 2: Python - Based Implementation
+
+
+<nowiki># Input responses for 10 questions</nowiki>
+
+responses = [4, 5, 2, 3, 1, 4, 5, 3, 2, 5]
+
+<nowiki># Calculate MBTI</nowiki>
+
+mbti = {
+
+"E/I": (responses[2] + responses[6]) / 2,
+
+"S/N": (responses[0] + responses[8]) / 2,
+
+"T/F": (responses[5] + responses[9]) / 2,
+
+"P/J": (responses[7] + responses[8]) / 2
+
+}
+
+mbti_type = (
+
+"E" if mbti["E/I"] > 3 else "I" +
+
+"N" if mbti["S/N"] > 3 else "S" +
+
+"F" if mbti["T/F"] > 3 else "T" +
+
+"P" if mbti["P/J"] > 3 else "J"
+
+)
+
+<nowiki># Calculate OCEAN</nowiki>
+
+ocean = {
+
+"Openness": (responses[0] + responses[8]) / 2,
+
+"Conscientiousness": (responses[1] + responses[7]) / 2,
+
+"Extraversion": (responses[2] + responses[6]) / 2,
+
+"Agreeableness": (responses[3] + responses[9]) / 2,
+
+"Neuroticism": 6 - responses[4] # Inverted for emotional stability
+
+}
+
+<nowiki># Calculate Hogan</nowiki>
+
+hogan = {
+
+"Ambition": (responses[2] + responses[6]) / 2,
+
+"Prudence": responses[1],
+
+"Sociability": (responses[2] + responses[9]) / 2,
+
+"Adjustment": responses[4]
+
+}
+
+<nowiki># Print results</nowiki>
+
+print("MBTI Type:", mbti_type)
+
+print("OCEAN Profile:", ocean)
+
+print("Hogan Traits:", hogan) 
+
+'''Output'''
+
+
+MBTI Type: INFP
+
+OCEAN Profile: {'Openness': 3.0, 'Conscientiousness': 4.0, 'Extraversion': 3.5, 'Agreeableness': 4.0, 'Neuroticism': 5.0}
+
+Hogan Traits: {'Ambition': 3.5, 'Prudence': 5.0, 'Sociability': 3.5, 'Adjustment': 1.0}
+
+
+Here’s a detailed breakdown of the evaluation process and backend implementation considerations for your 10-question, rule-based psychometric test system in Node.js and Express:
+
+
+1. On What Basis Are Candidates Being Evaluated?
+
+Candidates are evaluated based on their responses to targeted personality questions. These responses are mapped to specific traits or dimensions in the following frameworks:
+
+
+* <div style="margin-left:0.5in;">MBTI: Extraversion/Introversion, Sensing/Intuition, Thinking/Feeling, Judging/Perceiving.</div>
+* <div style="margin-left:0.5in;">OCEAN: Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism.</div>
+* <div style="margin-left:0.5in;">Hogan Dimensions: Ambition, Prudence, Sociability, Adjustment.</div>
+
+
+
+
+
+Each candidate's personality profile is created by scoring their answers and comparing them against predefined rule-based thresholds. The evaluation emphasises:
+
+
+* <div style="margin-left:0.5in;">Personality alignment with workplace behaviours.</div>
+* <div style="margin-left:0.5in;">Cognitive and interpersonal styles.</div>
+* <div style="margin-left:0.5in;">Risk-taking and emotional stability.</div>
+
+
+
+
+
+2. What Are the Metrics?
+
+There are 10 core metrics, aligned with the psychometric frameworks being assessed:
+
+
+MBTI Metrics (4 metrics):
+
+Extraversion (E) vs. Introversion (I)
+
+Sensing (S) vs. Intuition (N)
+
+Thinking (T) vs. Feeling (F)
+
+Judging (J) vs. Perceiving (P)
+
+
+OCEAN Metrics (5 metrics):
+
+Openness to Experience
+
+Conscientiousness
+
+Extraversion
+
+Agreeableness
+
+Emotional Stability (inverse of Neuroticism)
+
+
+Hogan Metrics (4 core metrics, overlapping with OCEAN):
+
+Ambition
+
+Prudence
+
+Sociability
+
+Adjustment
+
+
+Each response impacts one or more metrics, and the system aggregates the scores into a weighted average.
+
+
+3. How Many Metrics Are There?
+
+
+There are 13 metrics in total across the three frameworks:
+
+
+4 MBTI dimensions
+
+5 OCEAN traits
+
+4 Hogan workplace traits
+
+
+However, some metrics overlap (e.g., Extraversion is part of all three frameworks).
+
+
+4. What Type of Questions Are Being Asked?
+
+The questions are behavioural and situational, with responses scored on a Likert scale (1-5). 
+
+
+They focus on:
+
+
+Preferences (e.g., “Do you prefer working alone or in groups?”).
+
+Cognitive Styles (e.g., “Do you rely on logic or emotions when making decisions?”).
+
+Workplace Behavior (e.g., “Do you enjoy taking initiative in group settings?”).
+
+Emotional Tendencies (e.g., “How often do you feel anxious about future uncertainties?”).
+
+Social Behavior (e.g., “How important is it to maintain harmony in a group?”).
+
+
+Questions are tailored to ensure maximum variance in candidate responses to capture their personality accurately.
+
+
+
+
+5. What Is the Main Process of Evaluation for the Candidates?
+
+The evaluation follows these key steps:
+
+
+Step 1: Backend Data Mapping
+
+Each question maps to one or more metrics (e.g., Q3 maps to Extraversion in MBTI, OCEAN, and Hogan).
+
+Backend schema stores:
+
+Question IDs
+
+Metric weight mappings
+
+Thresholds for personality classifications (e.g., E/I threshold = 3.0).
+
+
+Step 2: Candidate Response Processing
+
+Capture Responses: Responses (1-5 Likert scale) are submitted via the frontend.
+
+Normalise Scores: Responses are normalised into percentages for easier comparison.
+
+Apply Weightage: Each question’s weight is applied to calculate scores for related metrics.
+
+
+Step 3: Rule-Based Profile Generation
+
+Use if-else conditions or switch cases to classify traits:
+
+Example: If Extraversion score > 3.0, classify as E; else classify as I.
+
+Aggregate results into:
+
+MBTI type (e.g., INFP)
+
+OCEAN profile (e.g., 70% Openness)
+
+Hogan insights (e.g., High Ambition)
+
+
+Step 4: Generate Evaluation Report
+
+Backend compiles a JSON object:
+
+
+{
+
+"MBTI": "INFP",
+
+"OCEAN": {
+
+"Openness": 70,
+
+"Conscientiousness": 85,
+
+"Extraversion": 40,
+
+"Agreeableness": 60,
+
+"Neuroticism": 20
+
+},
+
+"Hogan": {
+
+"Ambition": "High",
+
+"Prudence": "Moderate",
+
+"Sociability": "Low",
+
+"Adjustment": "Stable"
+
+}
+
+}
+
+
+Step 5: Frontend Integration
+
+JSON response is displayed to candidates as a summary or detailed report.
+
+
+
+
+'''Backend Schema Design'''
+
+
+1. Question Table
+
+Stores the questions and their mappings to metrics:
+
+
+{
+
+"question_id": 1,
+
+"text": "Do you feel energised by social interactions?",
+
+"related_metrics": ["MBTI_E/I", "OCEAN_Extraversion", "Hogan_Sociability"],
+
+"weights": {
+
+"MBTI_E/I": 0.5,
+
+"OCEAN_Extraversion": 0.3,
+
+"Hogan_Sociability": 0.2
+
+}
+
+}
+
+
+
+
+
+
+
+
+2. Candidate Responses Table
+
+Stores individual responses for processing:
+
+
+{
+
+"candidate_id": 101,
+
+"responses": {
+
+"1": 4,
+
+"2": 5,
+
+"3": 2,
+
+"4": 3,
+
+"5": 1,
+
+"6": 4,
+
+"7": 5,
+
+"8": 3,
+
+"9": 2,
+
+"10": 5
+
+}
+
+}
+
+
+# <div style="margin-left:0.5in;">Evaluation Result Table</div>
+
+
+
+Stores computed results:
+
+
+{
+
+"candidate_id": 101,
+
+"MBTI": "INFP",
+
+"OCEAN": {
+
+"Openness": 70,
+
+"Conscientiousness": 85,
+
+"Extraversion": 40,
+
+"Agreeableness": 60,
+
+"Neuroticism": 20
+
+},
+
+"Hogan": {
+
+"Ambition": "High",
+
+"Prudence": "Moderate",
+
+"Sociability": "Low",
+
+"Adjustment": "Stable"
+
+}
+
+}

@@ -29,7 +29,7 @@ uri = "mongodb+srv://smitshahcloudboost:1234@cluster0.45ng0.mongodb.net/?retryWr
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi("1"))
 db = client["internlink_deployment_dummy"]
-applicants_collection = db["applicants"]
+applicants_collection = db["applicants_3"]
 
 
 app = Flask(__name__)
@@ -1070,70 +1070,273 @@ def find_similar():
     """
     try:
         data = request.get_json()
-        profile = data.get("profile", {})
+        target_profile = data.get("profile", {})
 
-        # Add validation for required fields
-        if not profile:
+        # Validate input
+        if not target_profile:
             return jsonify({"error": "Profile is required"}), 400
 
-        # Convert incoming profile to feature format with new fields
-        target_features = {
-            "uid": "temp",
-            "name": profile.get("name", "Temporary"),
-            "age": profile.get("age", 0),
-            "experience": len(profile.get("experience", [])),
-            "weekly_hours": profile.get("weekly_hours", 40),
-            "personality_score": calculate_personality_score(
-                profile.get("personalityBlueprint", [])
-            ),
-            "education_level": get_education_level(profile.get("education", {})),
-            "profile": profile,
+        # Build query to find potential matches
+        base_query = {
+            "isResumeParsed": True  # Only consider profiles that have been parsed
         }
 
-        # Add language and tag features as before...
+        # Add filters based on target profile
+        if target_profile.get("seeking"):
+            base_query["profile.seeking"] = target_profile["seeking"]
 
-        similar_applicants = find_similar_applicants(target_features)
+        if target_profile.get("education", {}).get("institutionType"):
+            base_query["profile.education.institutionType"] = target_profile[
+                "education"
+            ]["institutionType"]
 
-        # Enhanced response format
-        results = []
-        for app, score in similar_applicants:
-            applicant = applicants_collection.find_one({"_id": ObjectId(app["uid"])})
-            if applicant:
-                results.append(
+        # Get potential matches
+        potential_matches = list(applicants_collection.find(base_query))
+
+        if not potential_matches:
+            return jsonify([]), 200
+
+        # Calculate similarity scores
+        similarity_results = []
+        for candidate in potential_matches:
+            # Skip if comparing with self
+            if str(candidate.get("_id")) == str(target_profile.get("_id")):
+                continue
+
+            similarity_score = calculate_detailed_similarity(target_profile, candidate)
+
+            if similarity_score["total_score"] > 50:  # Minimum similarity threshold
+                similarity_results.append(
                     {
-                        "id": str(applicant["_id"]),
-                        "name": applicant["name"],
-                        "similarity_score": score,
-                        "personality_match": calculate_personality_match(
-                            profile.get("personalityBlueprint", []),
-                            applicant["profile"].get("personalityBlueprint", []),
-                        ),
+                        "id": str(candidate["_id"]),
+                        "name": candidate.get("name", ""),
+                        "similarity_score": similarity_score["total_score"],
+                        "match_factors": {
+                            "skills_match": similarity_score["skills_match"],
+                            "education_match": similarity_score["education_match"],
+                            "experience_match": similarity_score["experience_match"],
+                            "language_match": similarity_score["language_match"],
+                            "tag_match": similarity_score["tag_match"],
+                        },
                         "profile": {
-                            "age": applicant["profile"].get("age"),
-                            "experience": len(
-                                applicant["profile"].get("experience", [])
-                            ),
-                            "education": applicant["profile"].get("education"),
-                            "languages": [
-                                l["language"]
-                                for l in applicant["profile"].get("languages", [])
-                            ],
-                            "skills": [
-                                s["skillName"]
-                                for s in applicant["profile"].get("skills", [])
-                            ],
-                            "tags": applicant["profile"].get("tags", []),
-                            "isResumeParsed": applicant.get("isResumeParsed", False),
-                            "totalApplications": len(applicant.get("appliedJobs", [])),
+                            "age": candidate["profile"].get("age"),
+                            "education": candidate["profile"].get("education"),
+                            "experience": candidate["profile"].get("experience"),
+                            "skills": candidate["profile"].get("skills"),
+                            "languages": candidate["profile"].get("languages"),
+                            "tags": candidate["profile"].get("tags"),
+                            "seeking": candidate["profile"].get("seeking"),
                         },
                     }
                 )
 
-        return jsonify(results), 200
+        # Sort by similarity score
+        similarity_results.sort(key=lambda x: x["similarity_score"], reverse=True)
+
+        # Return top 10 matches
+        return jsonify(similarity_results[:10]), 200
 
     except Exception as e:
         error_info = handle_exception(*sys.exc_info())
         return jsonify({"error": error_info}), 500
+
+
+def calculate_detailed_similarity(target_profile, candidate_profile):
+    """Calculate detailed similarity scores between two profiles"""
+    scores = {
+        "skills_match": calculate_skills_similarity(
+            target_profile.get("skills", []),
+            candidate_profile["profile"].get("skills", []),
+        ),
+        "education_match": calculate_education_similarity(
+            target_profile.get("education", {}),
+            candidate_profile["profile"].get("education", {}),
+        ),
+        "experience_match": calculate_experience_similarity(
+            target_profile.get("experience", []),
+            candidate_profile["profile"].get("experience", []),
+        ),
+        "language_match": calculate_language_similarity(
+            target_profile.get("languages", []),
+            candidate_profile["profile"].get("languages", []),
+        ),
+        "tag_match": calculate_tag_similarity(
+            target_profile.get("tags", []), candidate_profile["profile"].get("tags", [])
+        ),
+        "age_match": calculate_age_similarity(
+            target_profile.get("age"), candidate_profile["profile"].get("age")
+        ),
+        "personality_match": calculate_personality_similarity(
+            target_profile.get("personalityBlueprint", []),
+            candidate_profile["profile"].get("personalityBlueprint", []),
+        ),
+    }
+
+    # Define weights with matching keys
+    weights = {
+        "skills_match": 0.25,
+        "education_match": 0.20,
+        "experience_match": 0.15,
+        "language_match": 0.10,
+        "tag_match": 0.10,
+        "age_match": 0.10,
+        "personality_match": 0.10,
+    }
+
+    # Calculate total score
+    total_score = sum(scores[key] * weights[key] for key in scores.keys()) * 100
+
+    return {
+        "total_score": round(total_score, 2),
+        **scores,  # Include all individual scores in the result
+    }
+
+
+def calculate_personality_similarity(profile1, profile2):
+    """Calculate similarity between personality profiles based on blueprint responses"""
+    if not (profile1 and profile2):
+        return 0.0
+
+    # Compare raw responses from personality blueprint
+    responses1 = {q["questionId"]: q["selectedOption"] for q in profile1}
+    responses2 = {q["questionId"]: q["selectedOption"] for q in profile2}
+
+    # Calculate similarity based on response differences
+    total_questions = len(set(responses1.keys()) & set(responses2.keys()))
+    if total_questions == 0:
+        return 0.0
+
+    similarity_sum = 0
+    for qid in responses1:
+        if qid in responses2:
+            # Calculate difference in responses (max difference is 4 on 1-5 scale)
+            diff = abs(responses1[qid] - responses2[qid])
+            similarity = 1 - (diff / 4)
+            similarity_sum += similarity
+
+    return similarity_sum / total_questions
+
+
+def calculate_skills_similarity(skills1, skills2):
+    """Calculate similarity between skill sets."""
+    if not skills1 or not skills2:
+        return 0.0
+
+    skills1_names = set(s["skillName"].lower() for s in skills1)
+    skills2_names = set(s["skillName"].lower() for s in skills2)
+
+    intersection = len(skills1_names.intersection(skills2_names))
+    union = len(skills1_names.union(skills2_names))
+
+    return intersection / union if union > 0 else 0.0
+
+
+def calculate_education_similarity(edu1, edu2):
+    """Calculate similarity between education backgrounds."""
+    if not edu1 or not edu2:
+        return 0.0
+
+    score = 0.0
+    total_factors = 4
+
+    # Same institution type
+    if edu1.get("institutionType") == edu2.get("institutionType"):
+        score += 1.0
+
+    # Similar major
+    if edu1.get("major", "").lower() == edu2.get("major", "").lower():
+        score += 1.0
+
+    # Close CGPA
+    try:
+        cgpa1 = float(edu1.get("cgpa", 0))
+        cgpa2 = float(edu2.get("cgpa", 0))
+        if abs(cgpa1 - cgpa2) <= 0.5:
+            score += 1.0
+    except (ValueError, TypeError):
+        total_factors -= 1
+
+    # Close graduation years
+    try:
+        year1 = int(edu1.get("endYear", 0))
+        year2 = int(edu2.get("endYear", 0))
+        if abs(year1 - year2) <= 2:
+            score += 1.0
+    except (ValueError, TypeError):
+        total_factors -= 1
+
+    return score / total_factors if total_factors > 0 else 0.0
+
+
+def calculate_experience_similarity(exp1, exp2):
+    """Calculate similarity between experience sets."""
+    if not exp1 or not exp2:
+        return 0.0
+
+    # Compare experience duration and roles
+    total_similarity = 0
+    comparisons = 0
+
+    for e1 in exp1:
+        for e2 in exp2:
+            role_similarity = 0.0
+            if e1.get("position", "").lower() == e2.get("position", "").lower():
+                role_similarity = 1.0
+            elif any(
+                word in e1.get("position", "").lower()
+                for word in e2.get("position", "").lower().split()
+            ):
+                role_similarity = 0.5
+
+            total_similarity += role_similarity
+            comparisons += 1
+
+    return total_similarity / comparisons if comparisons > 0 else 0.0
+
+
+def calculate_language_similarity(langs1, langs2):
+    """Calculate similarity between language sets."""
+    if not langs1 or not langs2:
+        return 0.0
+
+    langs1_set = set(l["language"].lower() for l in langs1)
+    langs2_set = set(l["language"].lower() for l in langs2)
+
+    intersection = len(langs1_set.intersection(langs2_set))
+    union = len(langs1_set.union(langs2_set))
+
+    return intersection / union if union > 0 else 0.0
+
+
+def calculate_tag_similarity(tags1, tags2):
+    """Calculate similarity between tag sets."""
+    if not tags1 or not tags2:
+        return 0.0
+
+    tags1_set = set(t.lower() for t in tags1)
+    tags2_set = set(t.lower() for t in tags2)
+
+    intersection = len(tags1_set.intersection(tags2_set))
+    union = len(tags1_set.union(tags2_set))
+
+    return intersection / union if union > 0 else 0.0
+
+
+def calculate_age_similarity(age1, age2):
+    """Calculate similarity between ages."""
+    if not age1 or not age2:
+        return 0.0
+
+    try:
+        age_diff = abs(int(age1) - int(age2))
+        if age_diff <= 2:
+            return 1.0
+        elif age_diff <= 5:
+            return 0.5
+        else:
+            return 0.0
+    except (ValueError, TypeError):
+        return 0.0
 
 
 @app.route("/api/applicants/find", methods=["GET", "POST"])
