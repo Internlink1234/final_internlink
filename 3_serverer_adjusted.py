@@ -24,12 +24,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Connect to MongoDB
-uri = "mongodb+srv://vipin4597:Believe%4012345@cluster0.oag3t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+uri = "mongodb+srv://smitshahcloudboost:1234@cluster0.45ng0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi("1"))
-db = client["test"]
+db = client["internlink_deployment_dummy"]
 applicants_collection = db["applicants"]
+
+
 app = Flask(__name__)
 cors = CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
@@ -1219,6 +1221,7 @@ try:
 except Exception as e:
     print(f"Error initializing DeepSeek client: {e}")
     raise
+
 
 def _call_deepseek_api(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
     """Make API call to Deepseek with retry logic"""
