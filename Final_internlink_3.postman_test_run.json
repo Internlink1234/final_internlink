@@ -1,0 +1,154 @@
+{
+	"id": "1be8b31c-93dc-45c8-ab1f-7e608c5af1bf",
+	"name": "Final_internlink_3",
+	"timestamp": "2024-12-28T12:55:26.595Z",
+	"collection_id": "39719229-75354b5b-d2e2-4eb1-b4f9-4772bb587a01",
+	"folder_id": 0,
+	"environment_id": "0",
+	"totalPass": 0,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2024-12-28T12:55:08.055Z",
+	"totalFail": 0,
+	"results": [
+		{
+			"id": "5a12b5d5-abc8-436a-a2c3-fb4d345779b2",
+			"name": "https://final-internlink.onrender.com/health",
+			"url": "https://final-internlink.onrender.com/health",
+			"time": 1957,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				1957
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "ac33f296-6b8e-4e89-afd5-5d98d2a007eb",
+			"name": "https://final-internlink.onrender.com/api/candidates/construct",
+			"url": "https://final-internlink.onrender.com/api/candidates/construct",
+			"time": 12815,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				12815
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "c4efbc20-78d4-459e-8538-29d0f6780a9c",
+			"name": "https://final-internlink.onrender.com/api/applicants/compare",
+			"url": "https://final-internlink.onrender.com/api/applicants/compare",
+			"time": 784,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				784
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "a482e78b-889d-4392-8b43-f5d2812417f4",
+			"name": "https://final-internlink.onrender.com/api/applicants/recommend",
+			"url": "https://final-internlink.onrender.com/api/applicants/recommend",
+			"time": 650,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				650
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "aa4c1d93-e15b-414e-9437-6d5b3141dde6",
+			"name": "https://final-internlink.onrender.com/api/applicants/all",
+			"url": "https://final-internlink.onrender.com/api/applicants/all",
+			"time": 1323,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				1323
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "cb5ea18f-033a-4e16-9a47-913286101ae2",
+			"name": "https://final-internlink.onrender.com/api/applicants/find-similar",
+			"url": "https://final-internlink.onrender.com/api/applicants/find-similar",
+			"time": 573,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				573
+			],
+			"allTests": [
+				{}
+			]
+		}
+	],
+	"count": 1,
+	"totalTime": 18102,
+	"collection": {
+		"requests": [
+			{
+				"id": "5a12b5d5-abc8-436a-a2c3-fb4d345779b2",
+				"method": "GET"
+			},
+			{
+				"id": "ac33f296-6b8e-4e89-afd5-5d98d2a007eb",
+				"method": "POST"
+			},
+			{
+				"id": "c4efbc20-78d4-459e-8538-29d0f6780a9c",
+				"method": "POST"
+			},
+			{
+				"id": "a482e78b-889d-4392-8b43-f5d2812417f4",
+				"method": "POST"
+			},
+			{
+				"id": "aa4c1d93-e15b-414e-9437-6d5b3141dde6",
+				"method": "GET"
+			},
+			{
+				"id": "cb5ea18f-033a-4e16-9a47-913286101ae2",
+				"method": "POST"
+			}
+		]
+	}
+}
