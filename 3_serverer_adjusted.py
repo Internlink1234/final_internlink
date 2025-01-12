@@ -29,7 +29,7 @@ uri = "mongodb+srv://internlink61:feH2kOcVJHGqVvyG@internlink.trwsw.mongodb.net/
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi("1"))
 db = client["database"]
-applicants_collection = db["applicant"]
+applicants_collection = db["applicants"]
 
 
 app = Flask(__name__)
