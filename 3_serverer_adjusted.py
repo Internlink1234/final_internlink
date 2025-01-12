@@ -24,12 +24,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Connect to MongoDB
-uri = "mongodb+srv://vipin4597:Believe%4012345@cluster0.oag3t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+uri = "mongodb+srv://internlink61:feH2kOcVJHGqVvyG@internlink.trwsw.mongodb.net/database?retryWrites=true&w=majority&appName=Internlink"
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi("1"))
-db = client["internlink_deployment_dummy"]
-applicants_collection = db["applicants_3"]
+db = client["database"]
+applicants_collection = db["applicant"]
 
 
 app = Flask(__name__)
