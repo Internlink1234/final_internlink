@@ -1193,28 +1193,61 @@ def calculate_detailed_similarity(target_profile, candidate_profile):
 
 
 def calculate_personality_similarity(profile1, profile2):
-    """Calculate similarity between personality profiles based on blueprint responses"""
-    if not (profile1 and profile2):
+    """Calculate similarity between personality profiles based on OCEAN trait scores"""
+    # Check if both profiles have traitScores
+    trait_scores1 = profile1.get("traitScores", None)
+    trait_scores2 = profile2.get("traitScores", None)
+
+    if not trait_scores1 or not trait_scores2:
+        # Fall back to old method if traitScores not available
+        if profile1.get("personalityBlueprint") and profile2.get(
+            "personalityBlueprint"
+        ):
+            # Legacy personality blueprint comparison logic
+            responses1 = {
+                q["questionId"]: q["selectedOption"]
+                for q in profile1.get("personalityBlueprint", [])
+            }
+            responses2 = {
+                q["questionId"]: q["selectedOption"]
+                for q in profile2.get("personalityBlueprint", [])
+            }
+
+            total_questions = len(set(responses1.keys()) & set(responses2.keys()))
+            if total_questions == 0:
+                return 0.0
+
+            similarity_sum = 0
+            for qid in responses1:
+                if qid in responses2:
+                    diff = abs(responses1[qid] - responses2[qid])
+                    similarity = 1 - (diff / 4)
+                    similarity_sum += similarity
+
+            return similarity_sum / total_questions
         return 0.0
 
-    # Compare raw responses from personality blueprint
-    responses1 = {q["questionId"]: q["selectedOption"] for q in profile1}
-    responses2 = {q["questionId"]: q["selectedOption"] for q in profile2}
+    # New OCEAN-based calculation
+    traits = ["o", "c", "e", "a", "n"]
+    total_diff = 0
 
-    # Calculate similarity based on response differences
-    total_questions = len(set(responses1.keys()) & set(responses2.keys()))
-    if total_questions == 0:
-        return 0.0
+    for trait in traits:
+        # Get trait scores, defaulting to 5 (middle value) if missing
+        score1 = trait_scores1.get(trait, 5)
+        score2 = trait_scores2.get(trait, 5)
 
-    similarity_sum = 0
-    for qid in responses1:
-        if qid in responses2:
-            # Calculate difference in responses (max difference is 4 on 1-5 scale)
-            diff = abs(responses1[qid] - responses2[qid])
-            similarity = 1 - (diff / 4)
-            similarity_sum += similarity
+        # Calculate absolute difference for this trait
+        diff = abs(score1 - score2)
+        total_diff += diff
 
-    return similarity_sum / total_questions
+    # Calculate average difference across all 5 traits
+    avg_diff = total_diff / 5
+
+    # Convert to similarity score (10 - avg_diff) / 10 * 100%
+    similarity = (10 - avg_diff) / 10
+
+    # Ensure the score is between 0 and 1
+    return max(0, min(1, similarity))
 
 
 def calculate_skills_similarity(skills1, skills2):
@@ -1565,6 +1598,13 @@ def construct_candidate():
                 ],
                 "tags": array of strings (from: ["IT", "Marketing", "Finance and Accounting", "Sales", "Human Resources", "Legal", "Retail", "Customer Service"]),
                 "seeking": string (one of: "internship", "jobs"),
+                "traitScores": {
+                    "o": number (between 1-10, representing Openness),
+                    "c": number (between 1-10, representing Conscientiousness),
+                    "e": number (between 1-10, representing Extraversion),
+                    "a": number (between 1-10, representing Agreeableness),
+                    "n": number (between 1-10, representing Neuroticism)
+                },
                 "personalityBlueprint": [
                     {
                         "questionId": "67540aa95bada2c0c1b5d518",
@@ -1631,6 +1671,18 @@ def construct_candidate():
         8. Risk Taking: 1 = Very Cautious -> 5 = Risk-Embracing
         9. Flexibility: 1 = Structured -> 5 = Adaptable
         10. Social Sensitivity: 1 = Direct/Task-Oriented -> 5 = Diplomatic/People-Oriented
+
+        OCEAN Trait Scoring Guidelines for traitScores (1-10 scale):
+        - O (Openness): Higher scores indicate creativity, curiosity, and openness to new experiences
+        - C (Conscientiousness): Higher scores indicate organization, dependability, and self-discipline
+        - E (Extraversion): Higher scores indicate sociability, assertiveness, and energy
+        - A (Agreeableness): Higher scores indicate cooperation, compassion, and consideration
+        - N (Neuroticism): Higher scores indicate anxiety, emotional instability, and negative emotions
+
+        For the job description provided:
+        1. Select appropriate OCEAN trait scores (1-10) that would make the candidate successful in this role
+        2. Ensure consistency between the traitScores and personalityBlueprint selections
+        3. Adapt the scores to match job requirements (e.g., higher Conscientiousness for detail-oriented roles)
 
         Create a profile that:
         1. Matches the job requirements exactly
