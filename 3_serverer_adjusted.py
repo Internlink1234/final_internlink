@@ -10,6 +10,7 @@ from typing import Any, Dict
 
 import pandas as pd
 from bson import ObjectId
+from bson.json_util import dumps, loads
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from numpy import int8
