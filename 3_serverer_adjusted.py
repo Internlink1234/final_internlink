@@ -111,6 +111,29 @@ def transform_mongodb_to_features(applicant):
     return features
 
 
+def mongo_serialize(obj: Dict[str, Any]) -> Dict[str, Any]:
+    """Serialize MongoDB objects to JSON-compatible format"""
+    try:
+        # Convert to BSON and back to handle MongoDB-specific types
+        serialized = loads(dumps(obj))
+
+        # Additional cleaning for interpretation
+        def clean_value(v):
+            if isinstance(v, (ObjectId, datetime, date)):
+                return str(v)
+            if isinstance(v, dict):
+                return {k: clean_value(val) for k, val in v.items()}
+            if isinstance(v, list):
+                return [clean_value(item) for item in v]
+            return v
+
+        return clean_value(serialized)
+
+    except Exception as e:
+        logger.error(f"Serialization error: {str(e)}")
+        return str(obj)
+
+
 def calculate_personality_score(blueprint):
     if not blueprint:
         return 0
@@ -818,6 +841,8 @@ def compare_profile_with_applicant():
             },
         }
 
+        response = mongo_serialize(response)
+
         return jsonify(response), 200
 
     except Exception as e:
@@ -1445,14 +1470,14 @@ def get_applicant():
         return jsonify({"error": error_info}), 500
 
 
-DEEPSEEK_API_KEY = "sk-c7288debcb7b47cd89f1dd43ba1dccfb"
-if not DEEPSEEK_API_KEY:
-    raise ValueError("DEEPSEEK_API_KEY environment variable not set")
+DEEPSEEK_API_KEY = "sk-d36413ecc68f4350995b8531ec8ceb4e"
+# if not DEEPSEEK_API_KEY:
+#     raise ValueError("DEEPSEEK_API_KEY environment variable not set")
 
 try:
     deepseek_client = OpenAI(
         api_key=DEEPSEEK_API_KEY,
-        base_url="https://api.deepseek.com/v1",  # Updated base URL
+        base_url="https://api.deepseek.com",  # Updated base URL
     )
 except Exception as e:
     print(f"Error initializing DeepSeek client: {e}")
@@ -1465,6 +1490,11 @@ def _call_deepseek_api(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
     retry_delay = 1
     response = None
     last_error = None
+
+    deepseek_client = OpenAI(
+        api_key=DEEPSEEK_API_KEY,
+        base_url="https://api.deepseek.com",  # Updated base URL
+    )
 
     for attempt in range(max_retries):
         try:
@@ -1484,13 +1514,13 @@ def _call_deepseek_api(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
             }
         except Exception as e:
             last_error = str(e)
-            if attempt == max_retries - 1:
+            if attempt == max_retries:
                 raise Exception(
                     f"Failed to get response from DeepSeek API after {max_retries} retries. Last error: {last_error}"
                 )
             time.sleep(retry_delay)
         finally:
-            if response is None and attempt == max_retries - 1:
+            if response is None and attempt == max_retries:
                 raise Exception(
                     f"Maximum retries reached. Failed to get valid response from DeepSeek API. Last error: {last_error}"
                 )
