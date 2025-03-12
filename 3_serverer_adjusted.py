@@ -163,6 +163,84 @@ def calculate_personality_match(blueprint1, blueprint2):
     return (matching_answers / len(blueprint1)) * 100 if blueprint1 else 0
 
 
+def get_communication_score(applicant):
+    """Extract and normalize communication score from an applicant's call statistics."""
+    try:
+        # Get the most recent call data (if available)
+        hollr_ai_calls = applicant.get("profile", {}).get("hollrAiCalls", [])
+
+        if not hollr_ai_calls or len(hollr_ai_calls) == 0:
+            return None
+
+        # Retrieve the most recent call
+        latest_call = None
+
+        # Check if we have direct data or references
+        if (
+            isinstance(hollr_ai_calls[0], dict)
+            and "confidenceScore" in hollr_ai_calls[0]
+        ):
+            # Direct data available
+            latest_call = max(hollr_ai_calls, key=lambda x: x.get("createdAt", 0))
+        else:
+            # We have references - need to fetch the actual data
+            call_ids = [call_id for call_id in hollr_ai_calls if call_id]
+            if not call_ids:
+                return None
+
+            # Get the latest call by querying the database
+            latest_call_id = call_ids[-1]  # Assuming newest is last in the array
+            latest_call = db["HollrAiCall"].find_one({"_id": latest_call_id})
+
+        if not latest_call:
+            return None
+
+        # Calculate weighted communication score from metrics
+        metric_weights = {
+            "userClarity": 0.4,  # Clear articulation is most important
+            "userAccuracy": 0.35,  # Understanding context is very important
+            "confidenceScore": 0.25,  # Confidence is important but not as critical
+        }
+
+        communication_score = 0
+        metrics_present = False
+
+        for metric, weight in metric_weights.items():
+            if metric in latest_call and latest_call[metric] is not None:
+                # Normalize to 0-1 scale
+                normalized_value = latest_call[metric] / 100  # Assuming 0-100 scale
+                normalized_value = max(0, min(1, normalized_value))  # Ensure in range
+                communication_score += weight * normalized_value
+                metrics_present = True
+
+        return communication_score if metrics_present else None
+
+    except Exception as e:
+        logger.error(f"Error calculating communication score: {str(e)}")
+        return None
+
+
+def adjust_similarity_with_communication(similarity_score, applicant):
+    """Adjust the similarity score based on the applicant's communication abilities."""
+    # Get communication score for the real applicant
+    comm_score = get_communication_score(applicant)
+
+    # If no communication data is available, return the original score
+    if comm_score is None:
+        return similarity_score
+
+    # Apply a more conservative adjustment factor
+    # - Instead of ±20%, use ±10% to avoid overriding other factors
+    # - This creates a 20% potential adjustment range centered around 1.0
+    adjustment_factor = 0.9 + (comm_score * 0.2)
+
+    # Apply the adjustment to the similarity score
+    adjusted_score = similarity_score * adjustment_factor
+
+    # Ensure the score stays within valid range (0-100)
+    return round(max(0, min(100, adjusted_score)), 2)
+
+
 def calculate_similarity(applicant1, applicant2):
     """Calculate similarity between two applicants with weighted features"""
 
@@ -1129,14 +1207,32 @@ def find_similar():
             if str(candidate.get("_id")) == str(target_profile.get("_id")):
                 continue
 
+            # Original similarity calculation
             similarity_score = calculate_detailed_similarity(target_profile, candidate)
 
-            if similarity_score["total_score"] > 50:  # Minimum similarity threshold
+            # Apply communication adjustment to the similarity score
+            adjusted_score = adjust_similarity_with_communication(
+                similarity_score["total_score"], candidate
+            )
+
+            # Use the adjusted score
+            if adjusted_score > 50:  # Minimum similarity threshold
                 similarity_results.append(
                     {
                         "id": str(candidate["_id"]),
                         "name": candidate.get("name", ""),
-                        "similarity_score": similarity_score["total_score"],
+                        "similarity_score": adjusted_score,  # Use adjusted score as the main score
+                        "original_similarity_score": similarity_score[
+                            "total_score"
+                        ],  # Include original for reference
+                        "communication_factor": {
+                            "score": get_communication_score(candidate),
+                            "impact": (
+                                "adjusted"
+                                if get_communication_score(candidate) is not None
+                                else "none"
+                            ),
+                        },
                         "match_factors": {
                             "skills_match": similarity_score["skills_match"],
                             "education_match": similarity_score["education_match"],
